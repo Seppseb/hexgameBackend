@@ -47,7 +47,7 @@ public class Board implements Serializable {
         for (int i = 0; i < tilesPerRow.length; i++) {
             Tile[] row = new Tile[tilesPerRow[i]];
             for (int k = 0; k < row.length; k++) {
-                String type = drawType();
+                TileType type = drawType();
                 int number = "desert".equals(type) ? 0 : drawNumber();
                 Tile tile = new Tile(type, number);
                 if (!tilesWithNumber.containsKey(number)) tilesWithNumber.put(number, new ArrayList<Tile>());
@@ -163,7 +163,7 @@ public class Board implements Serializable {
 
     }
 
-    private String drawType() {
+    private TileType drawType() {
         int totalTypes = wood + clay + wool + wheat + stone + desert;
         if (totalTypes == 0) throw new java.lang.Error("BUG: drew too many types");
         // 0 - totalTypes;
@@ -172,35 +172,35 @@ public class Board implements Serializable {
         if (typeNumber <= limit) {
             if (wood < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
             wood--;
-            return "wood";
+            return TileType.wood;
         }
         limit+= clay;
         if (typeNumber <= limit) {
             if (clay < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
             clay--;
-            return "clay";
+            return TileType.clay;
         }
         limit+= wool;
         if (typeNumber <= limit) {
             if (wool < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
             wool--;
-            return "wool";
+            return TileType.wool;
         }
         limit+= wheat;
         if (typeNumber <= limit) {
             if (wheat < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
             wheat--;
-            return "wheat";
+            return TileType.wheat;
         }
         limit+= stone;
         if (typeNumber <= limit) {
             if (stone < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
             stone--;
-            return "stone";
+            return TileType.stone;
         }
         if (desert < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
         desert--;
-        return "desert";
+        return TileType.desert;
     }
 
     private int drawNumber() {
@@ -236,7 +236,7 @@ public class Board implements Serializable {
         for (int i = 0; i < tiles.length; i++) {
             Tile[] row = tiles[i];
             for (int k = 0; k < row.length; k++) {
-                s+= row[k].getType() + row[k].getNumber();
+                s+= row[k].getType().toString() + row[k].getNumber();
             }
             s+= "\n";
         }
@@ -249,6 +249,15 @@ public class Board implements Serializable {
 
     public Path[][] getPaths() {
         return paths;
+    }
+
+    public void handleDice(int diceNumber) {
+        if (diceNumber > 12 || diceNumber < 2) throw new java.lang.Error("BUG: bad dice value");
+        if (diceNumber == 7) return;
+        List<Tile> tileList = tilesWithNumber.get(diceNumber);
+        for (Tile tile: tileList) {
+            tile.handleDiceThrow();
+        }
     }
 
 }

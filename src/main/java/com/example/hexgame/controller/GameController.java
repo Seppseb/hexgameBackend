@@ -236,4 +236,38 @@ public class GameController {
         ));
     }
 
+    @PostMapping("/{gameId}/endTurn}")
+    public ResponseEntity<?> endTurn(@PathVariable String gameId,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.endTurn(gameId, userId);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "building failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "built"
+        ));
+    }
+
 }

@@ -183,6 +183,13 @@ public class GameInstance {
                 if (!spot.canBuildFreeVillage(player)) return false;
                 player.buildFreeVillage();
                 spot.buildVillage(player);
+                if (initialPlacementIndex >= players.size()) {
+                    for (int i = 0; i < 3; i++) {
+                        if (spot.getTile(i) != null) {
+                            player.drawType(spot.getTile(i).getType(), 1);
+                        }
+                    }
+                }
                 initialIsPlacingRoad = true;
                 sendMessage("BUILD", playerId + " at " + row + ", " + col, "");
                 break;
@@ -190,13 +197,11 @@ public class GameInstance {
                 if (spot.getBuildFactor() == 0) {
                     if (!player.canBuildVillage() || !spot.canBuildVillage(player)) return false;
                     player.buildVillage();
-                    bank.buildVillage();
                     spot.buildVillage(player);
                     sendMessage("BUILD", playerId + " at " + row + ", " + col, "");
                 } else {
                     if (!player.canBuildCity() || !spot.canBuildCity(player)) return false;
                     player.buildCity();
-                    bank.buildCity();
                     spot.buildCity(player);
                     sendMessage("BUILD", playerId + " at " + row + ", " + col, "");
                 }
@@ -214,8 +219,6 @@ public class GameInstance {
         //check player building avaliable -> implemnet
         //check building spot valid
         //check row, col
-        System.out.println(row + " " + col);
-
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (!initialIsPlacingRoad) return false;
         Player player = players.get(playerId);
@@ -234,7 +237,6 @@ public class GameInstance {
             case IN_PROGRESS:
                 if (!player.canBuildRoad() || !path.canBuildRoad(player)) return false;
                 player.buildRoad();
-                bank.buildRoad();
                 path.buildRoad(player);
                 sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "");
                 break;
@@ -257,7 +259,16 @@ public class GameInstance {
 
     public void startTurn() {
         int[] d = throw2Dice();
+        board.handleDice(d[0] + d[1]);
         sendMessage("START_TURN", "" + d[0] + "" + d[1], currentPlayer.getUserId());            
+    }
+
+    public boolean endTurn(String playerId) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        currentPlayer = currentPlayer.getNextPlayer();
+        startTurn();
+        //sendMessage("END_TURN", "", currentPlayer.getUserId());
+        return true;       
     }
 
     public Bank getBank() {

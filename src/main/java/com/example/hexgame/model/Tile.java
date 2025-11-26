@@ -7,10 +7,10 @@ import java.util.List;
 public class Tile implements Serializable {
 
     private final int number;
-    private final String type;
+    private final TileType type;
     private List<Node> nodes;
 
-    public Tile(String type, int number) {
+    public Tile(TileType type, int number) {
         this.type = type;
         this.number = number;
         this.nodes = new ArrayList<>();
@@ -28,8 +28,14 @@ public class Tile implements Serializable {
         return number;
     }
 
-    public String getType() {
+    public TileType getType() {
         return type;
+    }
+
+    public void handleDiceThrow() {
+        for (Node node: nodes) {
+            node.handleDiceThrow(this.type);
+        }
     }
 
 }

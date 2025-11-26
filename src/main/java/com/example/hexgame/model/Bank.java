@@ -52,30 +52,40 @@ public class Bank {
         this.stone += stone;
     }
 
-    public boolean takeWood(int wood) {
-        if (wood > this.wood) return false;
-        this.wood -= wood;
-        return true;
+    public int takeWood(int wood) {
+        if (wood <= 0) return 0;
+        int avaliable = wood <= this.wood ? wood : this.wood;
+        this.wood-=avaliable;
+        if (avaliable < 0 || this.wood < 0) throw new java.lang.Error("BUG: bank has negative amount");
+        return avaliable;
     }
-    public boolean takeClay(int clay) {
-        if (clay > this.clay) return false;
-        this.clay -= clay;
-        return true;
+    public int takeClay(int clay) {
+        if (clay <= 0) return 0;
+        int avaliable = clay <= this.clay ? clay : this.clay;
+        this.clay-=avaliable;
+        if (avaliable < 0 || this.clay < 0) throw new java.lang.Error("BUG: bank has negative amount");
+        return avaliable;
     }
-    public boolean takeWool(int wool) {
-        if (wool > this.wool) return false;
-        this.wool -= wool;
-        return true;
+    public int takeWool(int wool) {
+        if (wool <= 0) return 0;
+        int avaliable = wool <= this.wool ? wool : this.wool;
+        this.wool-=avaliable;
+        if (avaliable < 0 || this.wool < 0) throw new java.lang.Error("BUG: bank has negative amount");
+        return avaliable;
     }
-    public boolean takeWheat(int wheat) {
-        if (wheat > this.wheat) return false;
-        this.wheat -= wheat;
-        return true;
+    public int takeWheat(int wheat) {
+        if (wheat <= 0) return 0;
+        int avaliable = wheat <= this.wheat ? wheat : this.wheat;
+        this.wheat-=avaliable;
+        if (avaliable < 0 || this.wheat < 0) throw new java.lang.Error("BUG: bank has negative amount");
+        return avaliable;
     }
-    public boolean takeStone(int stone) {
-        if (stone > this.stone) return false;
-        this.stone -= stone;
-        return true;
+    public int takeStone(int stone) {
+        if (stone <= 0) return 0;
+        int avaliable = stone <= this.stone ? stone : this.stone;
+        this.stone-=avaliable;
+        if (avaliable < 0 || this.stone < 0) throw new java.lang.Error("BUG: bank has negative amount");
+        return avaliable;
     }
     public String drawDevelopmentCard() {
         int totalCards = knight + victoryPoint + development + roadwork + monopoly;
@@ -109,29 +119,6 @@ public class Bank {
         if (monopoly < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
         monopoly--;
         return "monopoly";
-    }
-
-    public boolean buildRoad() {
-        wood++;
-        clay++;
-        return true;
-    }
-
-    public boolean buildVillage() {
-        wood++;
-        clay++;
-        wheat++;
-        wool++;
-        return true;
-    }
-
-    public boolean buildCity() {
-        wheat++;
-        wheat++;
-        stone++;
-        stone++;
-        stone++;
-        return true;
     }
 
     public int getWood() {

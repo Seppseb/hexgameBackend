@@ -8,6 +8,7 @@ public class Player {
     private int initialDice;
     private Player nextPlayer;
     private String color;
+    private Bank bank;
 
     private int wood;
     private int clay;
@@ -39,9 +40,10 @@ public class Player {
         this.initialDice = initialDice;
     }
     // constructors, getters, setters
-    public Player() {}
-    public Player(String userId, String name) {
-        this.userId = userId; this.name = name;
+    public Player(String userId, String name, Bank bank) {
+        this.userId = userId;
+        this.name = name;
+        this.bank = bank;
     }
     // getters/setters...
     public String getUserId() {
@@ -71,8 +73,10 @@ public class Player {
 
     public boolean buildRoad() {
         if (!canBuildRoad()) return false;
-        wood--;
-        clay--;
+        wood-=1;
+        clay-=1;
+        bank.addWood(1);
+        bank.addClay(1);
 
         road--;
         return true;
@@ -94,10 +98,14 @@ public class Player {
 
     public boolean buildVillage() {
         if (!canBuildVillage()) return false;
-        wood--;
-        clay--;
-        wheat--;
-        wool--;
+        wood-=1;
+        clay-=1;
+        wheat-=1;
+        wool-=1;
+        bank.addWood(1);
+        bank.addClay(1);
+        bank.addWheat(1);
+        bank.addWool(1);
 
         village--;
         return true;
@@ -119,13 +127,60 @@ public class Player {
 
     public boolean buildCity() {
         if (!canBuildCity()) return false;
-        wheat--;
-        wheat--;
-        stone--;
-        stone--;
-        stone--;
+        wheat-=2;
+        stone-=3;
+        bank.addWheat(2);
+        bank.addStone(3);
 
         city--;
         return true;
+    }
+
+    public int drawWood(int wood) {
+        int amout = bank.takeWood(wood);
+        this.wood += amout;
+        return amout;
+    }
+
+    public int drawClay(int clay) {
+        int amout = bank.takeClay(clay);
+        this.clay += amout;
+        return amout;
+    }
+
+    public int drawWheat(int wheat) {
+        int amout = bank.takeWheat(wheat);
+        this.wheat += amout;
+        return amout;
+    }
+
+    public int drawWool(int wool) {
+        int amout = bank.takeWool(wool);
+        this.wool += amout;
+        return amout;
+    }
+
+    public int drawStone(int stone) {
+        int amout = bank.takeStone(stone);
+        this.stone += amout;
+        return amout;
+    }
+
+    public int drawType(TileType type, int amout) {
+        switch (type) {
+            case wood:
+                return drawWood(amout);
+            case clay:
+                return drawClay(amout);
+            case wheat:
+                return drawWheat(amout);
+            case wool:
+                return drawWool(amout);
+            case stone:
+                return drawStone(amout);
+            case desert:
+                return 0;
+            default: throw new java.lang.Error("BUG: bad ressource type");
+        }
     }
 }

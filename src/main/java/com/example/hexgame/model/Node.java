@@ -110,4 +110,10 @@ public class Node {
         paths[index] = path;
     }
 
+    public void handleDiceThrow(TileType type) {
+        if (owner != null) {
+            owner.drawType(type, buildFactor);
+        }
+    }
+
 }
