@@ -6,8 +6,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-import com.example.hexgame.dto.GameEvent;
-
 public class GameInstance {
     private String id; // game id (UUID)
     private Board board;
@@ -119,7 +117,7 @@ public class GameInstance {
                 d = throw2Dice();
             }
             playerOrder.put(d[0] + d[1], player);
-            sendMessage("INITIAL_ROLL", "" + d[0] + "" + d[1], player.getUserId());            
+            sendMessage("INITIAL_ROLL", "" + d[0] + "" + d[1], player.getUserId(), player.getName());            
         }
         currentPlayer = playerOrder.lastEntry().getValue();
         initialPlacementOrder = new Player[playerOrder.size() * 2];
@@ -129,15 +127,16 @@ public class GameInstance {
             currentPlayer = player;
             initialPlacementOrder[playerOrder.size() - 1 - i] = player;
             initialPlacementOrder[playerOrder.size() + i] = player;
+            player.setPlayerIndex(playerOrder.size() - 1 - i);
             i++;
         }
     }
 
-    public void sendMessage(String type, String message, String targetPlayerId) {
+    public void sendMessage(String type, String message, String targetPlayerId, String causer) {
         System.out.println(type + " for: " + ("".equals(targetPlayerId) ? "all" : targetPlayerId) + ": " + message);
         messagingTemplate.convertAndSend(
             "/topic/games/" + id,
-            Map.of("type", type, "message", message, "playerId", targetPlayerId, "game", this)
+            Map.of("type", type, "message", message, "playerId", targetPlayerId, "game", this, "playerName", causer)
         );
     }
 
@@ -174,16 +173,16 @@ public class GameInstance {
 
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         Player player = players.get(playerId);
-        if (initialIsPlacingRoad) return false;
         if (board.getNodes().length <= row || board.getNodes()[row].length <= col ) return false;
         Node spot = board.getNodes()[row][col];
         if (spot.getBuildFactor() > 1) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
-                if (!spot.canBuildFreeVillage(player)) return false;
+            if (initialIsPlacingRoad) return false;
+            if (!spot.canBuildFreeVillage(player) || !player.canBuildFreeVillage()) return false;
                 player.buildFreeVillage();
                 spot.buildVillage(player);
-                if (initialPlacementIndex >= players.size()) {
+                if (initialPlacementIndex > players.size()) {
                     for (int i = 0; i < 3; i++) {
                         if (spot.getTile(i) != null) {
                             player.drawType(spot.getTile(i).getType(), 1);
@@ -191,19 +190,19 @@ public class GameInstance {
                     }
                 }
                 initialIsPlacingRoad = true;
-                sendMessage("BUILD", playerId + " at " + row + ", " + col, "");
+                sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
                 break;
             case IN_PROGRESS:
                 if (spot.getBuildFactor() == 0) {
                     if (!player.canBuildVillage() || !spot.canBuildVillage(player)) return false;
                     player.buildVillage();
                     spot.buildVillage(player);
-                    sendMessage("BUILD", playerId + " at " + row + ", " + col, "");
+                    sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
                 } else {
                     if (!player.canBuildCity() || !spot.canBuildCity(player)) return false;
                     player.buildCity();
                     spot.buildCity(player);
-                    sendMessage("BUILD", playerId + " at " + row + ", " + col, "");
+                    sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
                 }
                 break;
             default:
@@ -220,17 +219,17 @@ public class GameInstance {
         //check building spot valid
         //check row, col
         if (!currentPlayer.getUserId().equals(playerId)) return false;
-        if (!initialIsPlacingRoad) return false;
         Player player = players.get(playerId);
         if (board.getPaths().length <= row || board.getPaths()[row].length <= col ) return false;
         Path path = board.getPaths()[row][col];
         if (path.getOwner() != null) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
-                if (!path.canBuildFreeRoad(player)) return false;
+                if (!initialIsPlacingRoad) return false;
+                if (!path.canBuildFreeRoad(player) || !player.canBuildFreeRoad()) return false;
                 player.buildFreeRoad();
                 path.buildRoad(player);
-                sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "");
+                sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 initialIsPlacingRoad = false;
                 nextInitialBuild();
                 break;
@@ -238,7 +237,7 @@ public class GameInstance {
                 if (!player.canBuildRoad() || !path.canBuildRoad(player)) return false;
                 player.buildRoad();
                 path.buildRoad(player);
-                sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "");
+                sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 break;
             default:
                 return false;
@@ -254,13 +253,13 @@ public class GameInstance {
         }
         currentPlayer = initialPlacementOrder[initialPlacementIndex];
         initialPlacementIndex++;
-        sendMessage("INITIAL_PLACE", "", currentPlayer.getUserId());    
+        sendMessage("INITIAL_PLACE", "", currentPlayer.getUserId(), currentPlayer.getName());    
     }
 
     public void startTurn() {
         int[] d = throw2Dice();
         board.handleDice(d[0] + d[1]);
-        sendMessage("START_TURN", "" + d[0] + "" + d[1], currentPlayer.getUserId());            
+        sendMessage("START_TURN", "" + d[0] + "" + d[1], currentPlayer.getUserId(), currentPlayer.getName());            
     }
 
     public boolean endTurn(String playerId) {

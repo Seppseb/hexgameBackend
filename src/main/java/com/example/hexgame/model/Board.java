@@ -48,7 +48,7 @@ public class Board implements Serializable {
             Tile[] row = new Tile[tilesPerRow[i]];
             for (int k = 0; k < row.length; k++) {
                 TileType type = drawType();
-                int number = "desert".equals(type) ? 0 : drawNumber();
+                int number = type == TileType.desert ? 0 : drawNumber();
                 Tile tile = new Tile(type, number);
                 if (!tilesWithNumber.containsKey(number)) tilesWithNumber.put(number, new ArrayList<Tile>());
                 tilesWithNumber.get(number).add(tile);
@@ -68,19 +68,34 @@ public class Board implements Serializable {
                         Node top = nodes[i-1][k];
                         top.setNeighbour(2, node);
                         node.setNeighbour(0, top);
+
+                        if (k > 0) {
+                            Tile topLeft = tiles[i/2 - 1][k-1];
+                            node.setTile(2, topLeft);
+                            topLeft.setNode(2, node);
+                        }
+                        if (k < tiles[i/2 - 1].length) {
+                            Tile topRigth = tiles[i/2 - 1][k];
+                            node.setTile(0, topRigth);
+                            topRigth.setNode(4, node);
+                        }
+
                     }
                     // bot tile of even row
                     if (i <= 4) {
                         Tile bot = tiles[i/2][k];
-                        bot.getNodes().add(node);
+                        bot.setNode(0 , node);
+                        node.setTile(1, bot);
                     } else if (i <= 8) {
                         if (k >= 1 && k <= tiles[i/2].length) {
                             Tile bot = tiles[i/2][k-1];
-                            bot.getNodes().add(node);
+                            bot.setNode(0 , node);
+                            node.setTile(1, bot);
                         }
                     }
                 } else {
                     // 2 top conn
+                    int topTileI = (i - 3) / 2;
                     if (i<=5) {
                         if (k > 0) {
                             Node leftTop = nodes[i-1][k-1];
@@ -92,6 +107,21 @@ public class Board implements Serializable {
                             rightTop.setNeighbour(2, node);
                             node.setNeighbour(1, rightTop);
                         }
+                        if (i >= 3 && k > 0 && k <= tiles[topTileI].length) {
+                            Tile top = tiles[topTileI][k-1];
+                            top.setNode(3, node);
+                            node.setTile(0, top);
+                        }
+                        if (k > 0) {
+                            Tile botLeft = tiles[topTileI + 1][k-1];
+                            botLeft.setNode(1, node);
+                            node.setTile(2, botLeft);
+                        }
+                        if (k < tiles[topTileI + 1].length) {
+                            Tile botRigth = tiles[topTileI + 1][k];
+                            botRigth.setNode(5, node);
+                            node.setTile(1, botRigth);
+                        }
                     } else {
                         Node leftTop = nodes[i-1][k];
                         Node rightTop = nodes[i-1][k+1];
@@ -99,6 +129,23 @@ public class Board implements Serializable {
                         rightTop.setNeighbour(2, node);
                         node.setNeighbour(0, leftTop);
                         node.setNeighbour(1, rightTop);
+
+                        Tile top = tiles[topTileI][k];
+                        top.setNode(3, node);
+                        node.setTile(0, top);
+
+                        if (i <= 9) {
+                            if (k >= 1) {
+                                Tile botLeft = tiles[topTileI+1][k-1];
+                                botLeft.setNode(1, node);
+                                node.setTile(2, botLeft);
+                            }
+                            if (k < tiles[topTileI+1].length) {
+                                Tile botRight = tiles[topTileI+1][k];
+                                botRight.setNode(5, node);
+                                node.setTile(1, botRight);
+                            }
+                        }
                     }
                 }
                 row[k] = node;

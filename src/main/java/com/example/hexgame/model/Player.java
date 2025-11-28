@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class Player {
     private String userId; // set by server (UUID string)
     private String name;   // optional display name
-    private int initialDice;
+    private int playerIndex;
     private Player nextPlayer;
     private String color;
     private Bank bank;
@@ -33,17 +33,21 @@ public class Player {
     public void setNextPlayer(Player nextPlayer) {
         this.nextPlayer = nextPlayer;
     }
-    public int getInitialDice() {
-        return initialDice;
+
+    public int getPlayerIndex() {
+        return playerIndex;
     }
-    public void setInitialDice(int initialDice) {
-        this.initialDice = initialDice;
+    public void setPlayerIndex(int playerIndex) {
+        this.playerIndex = playerIndex;
     }
     // constructors, getters, setters
     public Player(String userId, String name, Bank bank) {
         this.userId = userId;
         this.name = name;
         this.bank = bank;
+        this.road = 15;
+        this.village = 5;
+        this.city = 4;
     }
     // getters/setters...
     public String getUserId() {
@@ -112,7 +116,7 @@ public class Player {
     }
 
     public boolean canBuildFreeVillage() {
-        return village < 1;
+        return village >= 1;
     }
 
     public boolean buildFreeVillage() {
@@ -133,6 +137,7 @@ public class Player {
         bank.addStone(3);
 
         city--;
+        village++;
         return true;
     }
 
@@ -183,4 +188,21 @@ public class Player {
             default: throw new java.lang.Error("BUG: bad ressource type");
         }
     }
+    public int getWood() {
+        return wood;
+    }
+    public int getClay() {
+        return clay;
+    }
+    public int getWool() {
+        return wool;
+    }
+    public int getWheat() {
+        return wheat;
+    }
+    public int getStone() {
+        return stone;
+    }
+
+    
 }

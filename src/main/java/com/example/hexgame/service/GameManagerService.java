@@ -57,8 +57,8 @@ public class GameManagerService {
             Player p = new Player(userId, requestedName, gi.getBank());
             gi.getPlayers().put(userId, p);
             playerToGame.put(userId, gameId);
-            gi.sendMessage("JOINED_GAME", requestedName, "");
-            return JoinResult.success(userId, gameId);
+            gi.sendMessage("JOINED_GAME", requestedName, "", requestedName);
+            return JoinResult.success(userId, gameId, requestedName);
         } finally {
             gi.getLock().unlock();
         }
@@ -73,7 +73,7 @@ public class GameManagerService {
             if (gi.getState() != GameState.WAITING_FOR_PLAYERS) return false;
             if (gi.getPlayers().size() < 2) return false;
             gi.startGame();
-            gi.sendMessage("STARTED_GAME", "", "");
+            gi.sendMessage("STARTED_GAME", "", "", "");
             return true;
         } finally {
             gi.getLock().unlock();
@@ -135,7 +135,7 @@ public class GameManagerService {
 
     public void sendUpdate(String gameId) {
         GameInstance gi = games.get(gameId);
-        gi.sendMessage("UPDATE", "game changed", "");
+        gi.sendMessage("UPDATE", "game changed", "", "");
     }
 
     public boolean leaveGame(String userId) {
@@ -179,16 +179,17 @@ public class GameManagerService {
         public final String userId;
         public final String gameId;
         public final String message;
+        public final String name;
 
-        private JoinResult(boolean ok, String userId, String gameId, String message) {
-            this.ok = ok; this.userId = userId; this.gameId = gameId; this.message = message;
+        private JoinResult(boolean ok, String userId, String gameId, String message, String name) {
+            this.ok = ok; this.userId = userId; this.gameId = gameId; this.message = message; this.name = name;
         }
 
-        public static JoinResult success(String userId, String gameId) {
-            return new JoinResult(true, userId, gameId, "joined");
+        public static JoinResult success(String userId, String gameId, String name) {
+            return new JoinResult(true, userId, gameId, "joined", name);
         }
         public static JoinResult error(String msg) {
-            return new JoinResult(false, null, null, msg);
+            return new JoinResult(false, null, null, msg, null);
         }
     }
 }

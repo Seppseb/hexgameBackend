@@ -1,5 +1,7 @@
 package com.example.hexgame.model;
 
+import java.util.Arrays;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Node {
@@ -68,6 +70,7 @@ public class Node {
 
     @JsonIgnore
     public Tile getTile(int index) {
+        System.out.println(Arrays.toString(tiles));
         return tiles[index];
     }
 

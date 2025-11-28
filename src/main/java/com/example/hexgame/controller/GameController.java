@@ -71,6 +71,12 @@ public class GameController {
             cookie.setHttpOnly(false);
             cookie.setMaxAge(60 * 60 * 24 * 30);
             response.addCookie(cookie);
+
+            Cookie nameCookie = new Cookie("username", r.name);
+            nameCookie.setPath("/");
+            nameCookie.setHttpOnly(false);
+            nameCookie.setMaxAge(60 * 60 * 24 * 30);
+            response.addCookie(nameCookie);
         }
         // success response (JSON)
         return ResponseEntity.ok(Map.of(
@@ -236,7 +242,7 @@ public class GameController {
         ));
     }
 
-    @PostMapping("/{gameId}/endTurn}")
+    @PostMapping("/{gameId}/endTurn")
     public ResponseEntity<?> endTurn(@PathVariable String gameId,
                                     @CookieValue(value = "userId", required = false) String userId,
                                     HttpServletResponse response
@@ -260,7 +266,7 @@ public class GameController {
         if (!success) {
             return ResponseEntity
                         .badRequest()
-                        .body(Map.of("success", false, "message", "building failed"));
+                        .body(Map.of("success", false, "message", "Ending turn failed"));
         }
 
         return ResponseEntity.ok(Map.of(
