@@ -81,6 +81,7 @@ public class GameManagerService {
     }
 
     public boolean readyPlayer(String gameId, String playerId) {
+        System.out.println(playerId);
         if (gameId == null) return false;
         GameInstance gi = games.get(gameId);
         if (gi == null) return false;

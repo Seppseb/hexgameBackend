@@ -62,8 +62,8 @@ public class GameInstance {
     }
 
     public void readyPlayer(String playerId) {
-        //System.out.println(needReady);
-        //System.out.println(playerId);
+        System.out.println(needReady);
+        System.out.println(playerId);
         if (!players.containsKey(playerId)) return;
         switch (state) {
             case WAITING_FOR_PLAYERS:
@@ -78,7 +78,7 @@ public class GameInstance {
                 needReady.remove(playerId);
                 if (needReady.size() == 0) {
                     state = GameState.PLACEMENT;
-                    //System.out.println(currentPlayer);
+                    System.out.println(currentPlayer);
                     if (currentPlayer != null) {
                         nextInitialBuild();        
                     }
