@@ -81,7 +81,6 @@ public class GameManagerService {
     }
 
     public boolean readyPlayer(String gameId, String playerId) {
-        System.out.println(playerId);
         if (gameId == null) return false;
         GameInstance gi = games.get(gameId);
         if (gi == null) return false;
@@ -116,6 +115,19 @@ public class GameManagerService {
         try {
             if (!gi.getPlayers().containsKey(playerId)) return false;
             return gi.buildRoad(playerId, row, col);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean bankTrade(String gameId, String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.bankTrade(playerId, wood, clay, wheat, wool, stone);
         } finally {
             gi.getLock().unlock();
         }

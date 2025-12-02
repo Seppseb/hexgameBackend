@@ -242,6 +242,45 @@ public class GameController {
         ));
     }
 
+    @PostMapping("/{gameId}/bankTrade/{wood}/{clay}/{wheat}/{wool}/{stone}")
+    public ResponseEntity<?> bankTrade(@PathVariable String gameId,
+                                    @PathVariable int wood,
+                                    @PathVariable int clay,
+                                    @PathVariable int wheat,
+                                    @PathVariable int wool,
+                                    @PathVariable int stone,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.bankTrade(gameId, userId, wood, clay, wheat, wool, stone);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "trading failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "built"
+        ));
+    }
+
     @PostMapping("/{gameId}/endTurn")
     public ResponseEntity<?> endTurn(@PathVariable String gameId,
                                     @CookieValue(value = "userId", required = false) String userId,

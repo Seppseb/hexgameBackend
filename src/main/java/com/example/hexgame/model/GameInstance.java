@@ -62,8 +62,6 @@ public class GameInstance {
     }
 
     public void readyPlayer(String playerId) {
-        System.out.println(needReady);
-        System.out.println(playerId);
         if (!players.containsKey(playerId)) return;
         switch (state) {
             case WAITING_FOR_PLAYERS:
@@ -78,7 +76,6 @@ public class GameInstance {
                 needReady.remove(playerId);
                 if (needReady.size() == 0) {
                     state = GameState.PLACEMENT;
-                    System.out.println(currentPlayer);
                     if (currentPlayer != null) {
                         nextInitialBuild();        
                     }
@@ -91,7 +88,6 @@ public class GameInstance {
             case FINISHED:
                 break;
         }
-        //System.out.println(needReady);
     }
 
     public void assignColors() {
@@ -178,14 +174,15 @@ public class GameInstance {
         if (spot.getBuildFactor() > 1) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
-            if (initialIsPlacingRoad) return false;
-            if (!spot.canBuildFreeVillage(player) || !player.canBuildFreeVillage()) return false;
+                if (initialIsPlacingRoad) return false;
+                if (!spot.canBuildFreeVillage(player) || !player.canBuildFreeVillage()) return false;
                 player.buildFreeVillage();
                 spot.buildVillage(player);
                 if (initialPlacementIndex > players.size()) {
                     for (int i = 0; i < 3; i++) {
                         if (spot.getTile(i) != null) {
-                            player.drawType(spot.getTile(i).getType(), 1);
+                            //TODO handle desert, nullTile
+                            player.addRes(spot.getTile(i).getType(), 1);
                         }
                     }
                 }
@@ -238,6 +235,48 @@ public class GameInstance {
                 player.buildRoad();
                 path.buildRoad(player);
                 sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public boolean bankTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        Player player = players.get(playerId);
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                //check if user has res, check if bank has res, check if ressources +- equal, adjust res, return true;
+                HashMap<TileType, Integer> tradeRes = new HashMap<TileType, Integer>();
+                tradeRes.put(TileType.wood, wood);
+                tradeRes.put(TileType.clay, clay);
+                tradeRes.put(TileType.wheat, wheat);
+                tradeRes.put(TileType.wool, wool);
+                tradeRes.put(TileType.stone, stone);
+                int balance = 0;
+                for (TileType res: tradeRes.keySet()) {
+                    int amount = tradeRes.get(res);
+                    if (amount > 0) {
+                        if (!bank.hasRes(res, amount)) return false;
+                        balance+= player.getTradeFactor(res) * amount;
+                    } else if (amount < 0) {
+                        if (!player.hasRes(res, -amount)) return false;
+                        balance+= amount;
+                    }
+                }
+                if (balance != 0) {
+                    return false;
+                }
+                for (TileType res: tradeRes.keySet()) {
+                    int amount = tradeRes.get(res);
+                    if (amount > 0) {
+                        player.addRes(res, amount);
+                    } else if (amount < 0) {
+                        player.takeRes(res, -amount);
+                    }
+                }
+                sendMessage("BANK_TRADE", playerId, "", player.getName());
                 break;
             default:
                 return false;

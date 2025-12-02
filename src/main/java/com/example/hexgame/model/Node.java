@@ -115,7 +115,7 @@ public class Node {
 
     public void handleDiceThrow(TileType type) {
         if (owner != null) {
-            owner.drawType(type, buildFactor);
+            owner.addRes(type, buildFactor);
         }
     }
 

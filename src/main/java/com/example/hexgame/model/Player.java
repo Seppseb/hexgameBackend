@@ -1,5 +1,7 @@
 package com.example.hexgame.model;
 
+import java.util.HashMap;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Player {
@@ -10,11 +12,9 @@ public class Player {
     private String color;
     private Bank bank;
 
-    private int wood;
-    private int clay;
-    private int wool;
-    private int wheat;
-    private int stone;
+    private HashMap<TileType, Integer> resBalance; 
+
+    private HashMap<TileType, Integer> tradeFactor; 
 
     private int knight;
     private int victoryPoint;
@@ -48,6 +48,18 @@ public class Player {
         this.road = 15;
         this.village = 5;
         this.city = 4;
+        this.tradeFactor = new HashMap<TileType, Integer>();
+        tradeFactor.put(TileType.wood, 4);
+        tradeFactor.put(TileType.clay, 4);
+        tradeFactor.put(TileType.wheat, 4);
+        tradeFactor.put(TileType.wool, 4);
+        tradeFactor.put(TileType.stone, 4);
+        this.resBalance = new HashMap<TileType, Integer>();
+        resBalance.put(TileType.wood, 0);
+        resBalance.put(TileType.clay, 0);
+        resBalance.put(TileType.wheat, 0);
+        resBalance.put(TileType.wool, 0);
+        resBalance.put(TileType.stone, 0);
     }
     // getters/setters...
     public String getUserId() {
@@ -71,17 +83,47 @@ public class Player {
         this.color = color;
     }
 
+    public boolean hasRes(TileType type, int amount) {
+        return resBalance.get(type) >= amount;
+    }
+
+    public boolean takeRes(TileType type, int amount) {
+        if (!hasRes(type, amount)) return false;
+        resBalance.put(type, resBalance.get(type) - amount);
+        bank.addRes(type, amount);
+        return true;
+    }
+
+    public int addRes(TileType type, int amount) {
+        int actualAmount = bank.takeRes(type, amount);
+        resBalance.put(type, resBalance.get(type) + actualAmount);
+        return actualAmount;
+    }
+
+    public boolean canBuildItem(ShopItem item) {
+        for (TileType type: item.getCost().keySet()) {
+            int resCost = item.getCost().get(type);
+            if (!this.hasRes(type, resCost)) return false;
+        }
+        return true;
+    }
+
+    public boolean buildItem(ShopItem item) {
+        if (!canBuildItem(item)) return false;
+        for (TileType type: item.getCost().keySet()) {
+            int resCost = item.getCost().get(type);
+            this.takeRes(type, resCost);
+        }
+        return true;
+    }
+
     public boolean canBuildRoad() {
-        return wood >= 1 && clay >= 1 && road >= 1;
+        return this.canBuildItem(new RoadItem()) && road >= 1;
     }
 
     public boolean buildRoad() {
         if (!canBuildRoad()) return false;
-        wood-=1;
-        clay-=1;
-        bank.addWood(1);
-        bank.addClay(1);
-
+        this.buildItem(new RoadItem());
         road--;
         return true;
     }
@@ -97,19 +139,12 @@ public class Player {
     }
 
     public boolean canBuildVillage() {
-        return wood >= 1 && clay >= 1 && wheat >= 1 && wool >= 1 && village >= 1;
+        return canBuildItem(new VillageItem()) && village >= 1;
     }
 
     public boolean buildVillage() {
         if (!canBuildVillage()) return false;
-        wood-=1;
-        clay-=1;
-        wheat-=1;
-        wool-=1;
-        bank.addWood(1);
-        bank.addClay(1);
-        bank.addWheat(1);
-        bank.addWool(1);
+        this.buildItem(new VillageItem());
 
         village--;
         return true;
@@ -126,82 +161,56 @@ public class Player {
     }
 
     public boolean canBuildCity() {
-        return wheat >= 2 && stone >= 3 && city >= 1;
+        return canBuildItem(new CityItem()) && city >= 1;
     }
 
     public boolean buildCity() {
         if (!canBuildCity()) return false;
-        wheat-=2;
-        stone-=3;
-        bank.addWheat(2);
-        bank.addStone(3);
+        buildItem(new CityItem());
 
         city--;
         village++;
         return true;
     }
 
-    public int drawWood(int wood) {
-        int amout = bank.takeWood(wood);
-        this.wood += amout;
-        return amout;
+
+    public HashMap<TileType, Integer> getResBalance() {
+        return resBalance;
     }
 
-    public int drawClay(int clay) {
-        int amout = bank.takeClay(clay);
-        this.clay += amout;
-        return amout;
+    public HashMap<TileType, Integer> getTradeFactor() {
+        return tradeFactor;
     }
 
-    public int drawWheat(int wheat) {
-        int amout = bank.takeWheat(wheat);
-        this.wheat += amout;
-        return amout;
+    public int getTradeFactor(TileType res) {
+        return tradeFactor.get(res);
     }
 
-    public int drawWool(int wool) {
-        int amout = bank.takeWool(wool);
-        this.wool += amout;
-        return amout;
-    }
-
-    public int drawStone(int stone) {
-        int amout = bank.takeStone(stone);
-        this.stone += amout;
-        return amout;
-    }
-
-    public int drawType(TileType type, int amout) {
-        switch (type) {
-            case wood:
-                return drawWood(amout);
-            case clay:
-                return drawClay(amout);
-            case wheat:
-                return drawWheat(amout);
-            case wool:
-                return drawWool(amout);
-            case stone:
-                return drawStone(amout);
-            case desert:
-                return 0;
-            default: throw new java.lang.Error("BUG: bad ressource type");
+    public void buildPort(TileType res) {
+        switch (res) {
+                case wood:
+                    this.tradeFactor.put(TileType.wood, 2);
+                    break;
+                case clay:
+                    this.tradeFactor.put(TileType.clay, 2);
+                    break;
+                case wheat:
+                    this.tradeFactor.put(TileType.wheat, 2);
+                    break;
+                case wool:
+                    this.tradeFactor.put(TileType.wool, 2);
+                    break;
+                case stone:
+                    this.tradeFactor.put(TileType.stone, 2);
+                    break;
+                default:
+                    for (TileType type: this.tradeFactor.keySet()) {
+                        if (tradeFactor.get(type) > 3) {
+                            tradeFactor.put(type, 3);
+                        }
+                    }
+                    break;
         }
-    }
-    public int getWood() {
-        return wood;
-    }
-    public int getClay() {
-        return clay;
-    }
-    public int getWool() {
-        return wool;
-    }
-    public int getWheat() {
-        return wheat;
-    }
-    public int getStone() {
-        return stone;
     }
 
     
