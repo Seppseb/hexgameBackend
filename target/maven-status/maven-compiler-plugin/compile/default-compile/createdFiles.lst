@@ -13,6 +13,7 @@ com\example\hexgame\model\VillageItem.class
 com\example\hexgame\model\GameState.class
 com\example\hexgame\controller\GameController.class
 com\example\hexgame\model\TileType.class
+com\example\hexgame\model\DevelopmentType.class
 com\example\hexgame\config\WebConfig.class
 com\example\hexgame\dto\JoinResponse.class
 com\example\hexgame\model\Node.class

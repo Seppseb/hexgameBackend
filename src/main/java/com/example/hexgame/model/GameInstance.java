@@ -180,8 +180,7 @@ public class GameInstance {
                 spot.buildVillage(player);
                 if (initialPlacementIndex > players.size()) {
                     for (int i = 0; i < 3; i++) {
-                        if (spot.getTile(i) != null) {
-                            //TODO handle desert, nullTile
+                        if (spot.getTile(i) != null && spot.getTile(i).getType() != TileType.desert) {
                             player.addRes(spot.getTile(i).getType(), 1);
                         }
                     }

@@ -242,7 +242,7 @@ public class GameController {
         ));
     }
 
-    @PostMapping("/{gameId}/buyDevelopment/{row}/{col}")
+    @PostMapping("/{gameId}/buyDevelopment")
     public ResponseEntity<?> buyDevelopment(@PathVariable String gameId,
                                     @CookieValue(value = "userId", required = false) String userId,
                                     HttpServletResponse response

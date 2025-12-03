@@ -70,7 +70,6 @@ public class Node {
 
     @JsonIgnore
     public Tile getTile(int index) {
-        System.out.println(Arrays.toString(tiles));
         return tiles[index];
     }
 

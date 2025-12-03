@@ -71,10 +71,12 @@ public class Bank {
     }
 
     public boolean hasRes(TileType type, int amount) {
+        if (resBalance.get(type) == null) return false;
         return resBalance.get(type) >= amount;
     }
 
     public int takeRes(TileType type, int amount) {
+        if (resBalance.get(type) == null) return 0;
         int avaliableAmount = resBalance.get(type);
         if (avaliableAmount <= 0) return 0;
         int actualAmount = amount <= avaliableAmount ? amount : avaliableAmount;
@@ -83,6 +85,7 @@ public class Bank {
     }
 
     public void addRes(TileType type, int amount) {
+        if (resBalance.get(type) == null) return;
         resBalance.put(type, resBalance.get(type) + amount);
     }
 

@@ -59,6 +59,10 @@ public class Player {
             this.cities.add(new CityItem());
         }
 
+        this.developments = new ArrayDeque<DevelopmentItem>();
+        this.usedDevelopments = new ArrayDeque<DevelopmentItem>();
+
+
         this.tradeFactor = new HashMap<TileType, Integer>();
         tradeFactor.put(TileType.wood, 4);
         tradeFactor.put(TileType.clay, 4);
@@ -95,17 +99,20 @@ public class Player {
     }
 
     public boolean hasRes(TileType type, int amount) {
+        if (resBalance.get(type) == null) return false;
         return resBalance.get(type) >= amount;
     }
 
     public boolean takeRes(TileType type, int amount) {
         if (!hasRes(type, amount)) return false;
+        if (resBalance.get(type) == null) return false;
         resBalance.put(type, resBalance.get(type) - amount);
         bank.addRes(type, amount);
         return true;
     }
 
     public int addRes(TileType type, int amount) {
+        if (resBalance.get(type) == null) return 0;
         int actualAmount = bank.takeRes(type, amount);
         resBalance.put(type, resBalance.get(type) + actualAmount);
         return actualAmount;
