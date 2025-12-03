@@ -1,5 +1,6 @@
 package com.example.hexgame.model;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,21 +11,20 @@ public class Player {
     private int playerIndex;
     private Player nextPlayer;
     private String color;
+    
     private Bank bank;
 
     private HashMap<TileType, Integer> resBalance; 
 
     private HashMap<TileType, Integer> tradeFactor; 
 
-    private int knight;
-    private int victoryPoint;
-    private int development;
-    private int roadwork;
-    private int monopoly;
+    private ArrayDeque<DevelopmentItem> developments;
+    private ArrayDeque<DevelopmentItem> usedDevelopments;
 
-    private int road;
-    private int village;
-    private int city;
+
+    private ArrayDeque<RoadItem> roads;
+    private ArrayDeque<VillageItem> villages;
+    private ArrayDeque<CityItem> cities;
 
     @JsonIgnore
     public Player getNextPlayer() {
@@ -45,9 +45,20 @@ public class Player {
         this.userId = userId;
         this.name = name;
         this.bank = bank;
-        this.road = 15;
-        this.village = 5;
-        this.city = 4;
+
+        this.roads = new ArrayDeque<RoadItem>();
+        for (int i = 0; i < 15; i++) {
+            this.roads.add(new RoadItem());
+        }
+        this.villages = new ArrayDeque<VillageItem>();
+        for (int i = 0; i < 5; i++) {
+            this.villages.add(new VillageItem());
+        }
+        this.cities = new ArrayDeque<CityItem>();
+        for (int i = 0; i < 4; i++) {
+            this.cities.add(new CityItem());
+        }
+
         this.tradeFactor = new HashMap<TileType, Integer>();
         tradeFactor.put(TileType.wood, 4);
         tradeFactor.put(TileType.clay, 4);
@@ -118,58 +129,65 @@ public class Player {
     }
 
     public boolean canBuildRoad() {
-        return this.canBuildItem(new RoadItem()) && road >= 1;
+        return this.roads.size() >= 1 && this.canBuildItem(this.roads.peekFirst());
     }
 
     public boolean buildRoad() {
         if (!canBuildRoad()) return false;
-        this.buildItem(new RoadItem());
-        road--;
+        this.buildItem(this.roads.removeFirst());
         return true;
     }
 
     public boolean canBuildFreeRoad() {
-        return road >= 1;
+        return this.roads.size() >= 1;
     }
 
     public boolean buildFreeRoad() {
         if (!canBuildFreeRoad()) return false;
-        road--;
+        this.roads.removeFirst();
         return true;
     }
 
     public boolean canBuildVillage() {
-        return canBuildItem(new VillageItem()) && village >= 1;
+        return this.villages.size() >= 1 && canBuildItem(this.villages.peekFirst());
     }
 
     public boolean buildVillage() {
         if (!canBuildVillage()) return false;
-        this.buildItem(new VillageItem());
-
-        village--;
+        this.buildItem(this.villages.removeFirst());
         return true;
     }
 
     public boolean canBuildFreeVillage() {
-        return village >= 1;
+        return this.villages.size() >= 1;
     }
 
     public boolean buildFreeVillage() {
         if (!canBuildFreeVillage()) return false;
-        village--;
+        this.villages.removeFirst();
         return true;
     }
 
     public boolean canBuildCity() {
-        return canBuildItem(new CityItem()) && city >= 1;
+        return this.cities.size() >= 1 && canBuildItem(this.cities.peekFirst());
     }
 
     public boolean buildCity() {
         if (!canBuildCity()) return false;
-        buildItem(new CityItem());
+        buildItem(this.cities.removeFirst());
+        this.villages.add(new VillageItem());
+        return true;
+    }
 
-        city--;
-        village++;
+    public boolean canBuyDevelopment() {
+        return this.bank.getDevelopments().size() >= 1 && canBuildItem(this.bank.getDevelopments().peekFirst());
+    }
+
+    public boolean buyDevelopment() {
+        if (!canBuyDevelopment()) return false;
+        DevelopmentItem development = this.bank.getDevelopments().removeFirst();
+        buildItem(development);
+        this.developments.add(development);
         return true;
     }
 
@@ -213,5 +231,25 @@ public class Player {
         }
     }
 
-    
+    public int getRoadNumber() {
+        return roads.size();
+    }
+
+    public int getVillageNumber() {
+        return villages.size();
+    }
+
+    public int getCityNumber() {
+        return cities.size();
+    }
+
+    public ArrayDeque<DevelopmentItem> getDevelopments() {
+        return developments;
+    }
+
+    public ArrayDeque<DevelopmentItem> getUsedDevelopments() {
+        return usedDevelopments;
+    }
+
+
 }

@@ -1,23 +1,22 @@
 package com.example.hexgame.model;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Random;
 
 
 public class Bank {
     
-    private HashMap<TileType, Integer> resBalance; 
+    private HashMap<TileType, Integer> resBalance;
 
-    private int knight;
-    private int victoryPoint;
-    private int development;
-    private int roadwork;
-    private int monopoly;
+    private ArrayDeque<DevelopmentItem> developments;
 
     private Random random;
 
-
     public Bank(Random random) {
+
+        this.random = random;
+
         this.resBalance = new HashMap<TileType, Integer>();
         resBalance.put(TileType.wood, 19);
         resBalance.put(TileType.clay, 19);
@@ -25,13 +24,50 @@ public class Bank {
         resBalance.put(TileType.wool, 19);
         resBalance.put(TileType.stone, 19);
 
-        this.knight = 14;
-        this.development = 2;
-        this.roadwork = 2;
-        this.monopoly = 2;
-        this.victoryPoint = 5;
+        this.developments = new ArrayDeque<DevelopmentItem>();
 
-        this.random = random;
+        int knight = 14;
+        int development = 2;
+        int roadwork = 2;
+        int monopoly = 2;
+        int victoryPoint = 5;
+
+        for (int totalCards = knight + victoryPoint + development + roadwork + monopoly; totalCards > 0; totalCards--) {
+            // 0 - totalCards-1; -> +1 -> 1 - totalCards
+            int cardNumber = random.nextInt(totalCards) + 1;
+
+            int limit = knight;
+            if (cardNumber <= limit) {
+                if (knight < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
+                knight--;
+                this.developments.add(new DevelopmentItem(DevelopmentType.knight));
+                continue;
+            }
+            limit+= victoryPoint;
+            if (cardNumber <= limit) {
+                if (victoryPoint < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
+                victoryPoint--;
+                this.developments.add(new DevelopmentItem(DevelopmentType.victoryPoint));
+                continue;
+            }
+            limit+= development;
+            if (cardNumber <= limit) {
+                if (development < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
+                development--;
+                this.developments.add(new DevelopmentItem(DevelopmentType.development));
+                continue;
+            }
+            limit+= roadwork;
+            if (cardNumber <= limit) {
+                if (roadwork < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
+                roadwork--;
+                this.developments.add(new DevelopmentItem(DevelopmentType.roadwork));
+                continue;
+            }
+            if (monopoly < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
+            monopoly--;
+            this.developments.add(new DevelopmentItem(DevelopmentType.monopoly));
+        }
     }
 
     public boolean hasRes(TileType type, int amount) {
@@ -50,62 +86,12 @@ public class Bank {
         resBalance.put(type, resBalance.get(type) + amount);
     }
 
-    public String drawDevelopmentCard() {
-        int totalCards = knight + victoryPoint + development + roadwork + monopoly;
-        if (totalCards == 0) return "";
-        // 0 - totalCards;
-        int cardNumber = random.nextInt(totalCards) + 1;
-        int limit = knight;
-        if (cardNumber <= limit) {
-            if (knight < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
-            knight--;
-            return "knight";
-        }
-        limit+= victoryPoint;
-        if (cardNumber <= limit) {
-            if (victoryPoint < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
-            victoryPoint--;
-            return "victoryPoint";
-        }
-        limit+= development;
-        if (cardNumber <= limit) {
-            if (development < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
-            development--;
-            return "development";
-        }
-        limit+= roadwork;
-        if (cardNumber <= limit) {
-            if (roadwork < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
-            roadwork--;
-            return "roadwork";
-        }
-        if (monopoly < 1) throw new java.lang.Error("BUG: took card that doesnt exist");
-        monopoly--;
-        return "monopoly";
-    }
-
-    public int getKnight() {
-        return knight;
-    }
-
-    public int getVictoryPoint() {
-        return victoryPoint;
-    }
-
-    public int getDevelopment() {
-        return development;
-    }
-
-    public int getRoadwork() {
-        return roadwork;
-    }
-
-    public int getMonopoly() {
-        return monopoly;
-    }
-
     public HashMap<TileType, Integer> getResBalance() {
         return resBalance;
+    }
+
+    public ArrayDeque<DevelopmentItem> getDevelopments() {
+        return developments;
     }
 
 }

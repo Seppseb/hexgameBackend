@@ -242,6 +242,21 @@ public class GameInstance {
         return true;
     }
 
+    public boolean buyDevelopment(String playerId) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        Player player = players.get(playerId);
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                if (!player.canBuyDevelopment()) return false;
+                player.buyDevelopment();
+                sendMessage("BOUGTH_DEVELOPMENT", playerId, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
     public boolean bankTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         Player player = players.get(playerId);

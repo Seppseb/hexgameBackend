@@ -120,6 +120,19 @@ public class GameManagerService {
         }
     }
 
+    public boolean buyDevelopment(String gameId, String playerId) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.buyDevelopment(playerId);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
     public boolean bankTrade(String gameId, String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (gameId == null) return false;
         GameInstance gi = games.get(gameId);

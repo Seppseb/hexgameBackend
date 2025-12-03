@@ -242,6 +242,40 @@ public class GameController {
         ));
     }
 
+    @PostMapping("/{gameId}/buyDevelopment/{row}/{col}")
+    public ResponseEntity<?> buyDevelopment(@PathVariable String gameId,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.buyDevelopment(gameId, userId);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "buying failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "bougth"
+        ));
+    }
+
     @PostMapping("/{gameId}/bankTrade/{wood}/{clay}/{wheat}/{wool}/{stone}")
     public ResponseEntity<?> bankTrade(@PathVariable String gameId,
                                     @PathVariable int wood,
@@ -277,7 +311,7 @@ public class GameController {
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "gameId", gameId,
-                "message", "built"
+                "message", "traded"
         ));
     }
 
@@ -311,7 +345,7 @@ public class GameController {
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "gameId", gameId,
-                "message", "built"
+                "message", "ended"
         ));
     }
 
