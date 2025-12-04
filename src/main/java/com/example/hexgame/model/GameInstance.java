@@ -68,8 +68,7 @@ public class GameInstance {
                 needReady.remove(playerId);
                 if (needReady.size() == 0) {
                     state = GameState.ROLL_FOR_POSITION;
-                    throwInitialDice();
-                    assignColors();
+                    initializeGame();
                 }
                 break;
             case ROLL_FOR_POSITION:
@@ -101,6 +100,11 @@ public class GameInstance {
             player.setColor(colors.get(i));
             colors.remove(i);
         }
+    }
+
+    public void initializeGame() {
+        throwInitialDice();
+        assignColors();
     }
 
     public void throwInitialDice() {
@@ -160,13 +164,6 @@ public class GameInstance {
 
 
     public boolean build(String playerId, int row, int col) {
-        //check player turn
-        //check game phase
-        //check player ressources only if gamestat erunning not initial build
-        //check player building avaliable -> implemnet
-        //check building spot valid
-        //check row, col
-
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         Player player = players.get(playerId);
         if (board.getNodes().length <= row || board.getNodes()[row].length <= col ) return false;
@@ -175,9 +172,10 @@ public class GameInstance {
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
                 if (initialIsPlacingRoad) return false;
-                if (!spot.canBuildFreeVillage(player) || !player.canBuildFreeVillage()) return false;
+                if (!spot.canBuildInitialVillage(player) || !player.canBuildFreeVillage()) return false;
                 player.buildFreeVillage();
-                spot.buildVillage(player);
+                spot.buildInitialVillage(player);
+                //TODO handle in tile in buildinitialvillage with boolean get res
                 if (initialPlacementIndex > players.size()) {
                     for (int i = 0; i < 3; i++) {
                         if (spot.getTile(i) != null && spot.getTile(i).getType() != TileType.desert) {
@@ -208,12 +206,6 @@ public class GameInstance {
     }
 
     public boolean buildRoad(String playerId, int row, int col) {
-        //check player turn
-        //check game phase
-        //check player ressources only if gamestat erunning not initial build
-        //check player building avaliable -> implemnet
-        //check building spot valid
-        //check row, col
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         Player player = players.get(playerId);
         if (board.getPaths().length <= row || board.getPaths()[row].length <= col ) return false;
@@ -222,9 +214,9 @@ public class GameInstance {
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
                 if (!initialIsPlacingRoad) return false;
-                if (!path.canBuildFreeRoad(player) || !player.canBuildFreeRoad()) return false;
+                if (!path.canBuildInitialRoad(player) || !player.canBuildFreeRoad()) return false;
                 player.buildFreeRoad();
-                path.buildRoad(player);
+                path.buildInitialRoad(player);
                 sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 initialIsPlacingRoad = false;
                 nextInitialBuild();
@@ -261,7 +253,6 @@ public class GameInstance {
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
-                //check if user has res, check if bank has res, check if ressources +- equal, adjust res, return true;
                 HashMap<TileType, Integer> tradeRes = new HashMap<TileType, Integer>();
                 tradeRes.put(TileType.wood, wood);
                 tradeRes.put(TileType.clay, clay);
