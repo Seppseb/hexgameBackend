@@ -11,6 +11,7 @@ public class Node {
     private Tile[] tiles;
     private Node[] neighbours;
     private Path[] paths;
+    private Port port;
 
     private HashSet<String> canPlaceVillage;
  
@@ -50,6 +51,9 @@ public class Node {
         owner = player;
         color = player.getColor();
         buildFactor++;
+        if (port != null) {
+            player.buildPort(port.getType());
+        }
         this.canPlaceVillage.clear();
         for (Node neighbour : neighbours) {
             if (neighbour != null) neighbour.markUnuseable();
@@ -62,8 +66,9 @@ public class Node {
         owner = player;
         color = player.getColor();
         buildFactor++;
-
-
+        if (port != null) {
+            player.buildPort(port.getType());
+        }
         for (Node neighbour : neighbours) {
             if (neighbour != null) neighbour.markUnuseable();
         }
@@ -170,6 +175,14 @@ public class Node {
         if (owner != null) {
             owner.addRes(type, buildFactor);
         }
+    }
+
+    public Port getPort() {
+        return port;
+    }
+
+    public void setPort(Port port) {
+        this.port = port;
     }
 
 }

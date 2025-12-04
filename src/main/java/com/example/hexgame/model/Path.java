@@ -9,6 +9,8 @@ public class Path {
     private Player owner;
     private String color;
 
+    private Port port;
+
     private HashSet<String> canPlaceRoad;
     private HashSet<String> canPlaceInitialRoad;
 
@@ -92,6 +94,18 @@ public class Path {
 
     public HashSet<String> getCanPlaceInitialRoad() {
         return canPlaceInitialRoad;
+    }
+
+
+    public Port getPort() {
+        return port;
+    }
+
+    public void setPort(Port port) {
+        this.port = port;
+        for (Node node: nodes) {
+            if (node != null) node.setPort(port);
+        }
     }
     
 }

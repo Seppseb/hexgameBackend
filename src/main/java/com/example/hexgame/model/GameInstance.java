@@ -248,6 +248,7 @@ public class GameInstance {
         return true;
     }
 
+    //TODO fix logic, right now port means getting ressource cheap not giving it as valuavle
     public boolean bankTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         Player player = players.get(playerId);
