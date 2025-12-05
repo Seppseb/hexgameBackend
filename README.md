@@ -12,4 +12,10 @@ mvn clean spring-boot:run
 push to server:
 mvn clean package -DskipTests
 scp -r ./ root@46.62.128.247:/opt/hexgameapp/backend/hexgameBackend
-->ssh server, update;reload ngix
+
+ssh root@46.62.128.247
+# restart service
+systemctl restart hexgameapp
+
+# reload nginx
+nginx -t && systemctl reload nginx

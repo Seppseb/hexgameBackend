@@ -17,7 +17,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/games")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class GameController {
 
     private final GameManagerService manager;
