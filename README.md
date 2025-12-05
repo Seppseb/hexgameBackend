@@ -8,3 +8,8 @@ local setup:
 mvn clean package
 mvn clean compile
 mvn clean spring-boot:run
+
+push to server:
+mvn clean package -DskipTests
+scp -r ./ root@46.62.128.247:/opt/hexgameapp/backend/hexgameBackend
+->ssh server, update;reload ngix
