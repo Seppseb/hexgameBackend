@@ -11,8 +11,10 @@ public class Player {
     private int playerIndex;
     private Player nextPlayer;
     private String color;
+    private int victoryPoints;
     
     private Bank bank;
+    private GameInstance game;
 
     private HashMap<TileType, Integer> resBalance; 
 
@@ -25,6 +27,9 @@ public class Player {
     private ArrayDeque<RoadItem> roads;
     private ArrayDeque<VillageItem> villages;
     private ArrayDeque<CityItem> cities;
+
+    //TODO make variable, also other stuff like road ammount and other things
+    private int pointsToWin = 10;
 
     @JsonIgnore
     public Player getNextPlayer() {
@@ -41,10 +46,12 @@ public class Player {
         this.playerIndex = playerIndex;
     }
     // constructors, getters, setters
-    public Player(String userId, String name, Bank bank) {
+    public Player(String userId, String name, Bank bank, GameInstance gameInstance) {
         this.userId = userId;
         this.name = name;
         this.bank = bank;
+        this.game = gameInstance;
+        this.victoryPoints = 0;
 
         this.roads = new ArrayDeque<RoadItem>();
         for (int i = 0; i < 15; i++) {
@@ -142,6 +149,7 @@ public class Player {
     public boolean buildRoad() {
         if (!canBuildRoad()) return false;
         this.buildItem(this.roads.removeFirst());
+        checkLongestRoad();
         return true;
     }
 
@@ -152,7 +160,12 @@ public class Player {
     public boolean buildFreeRoad() {
         if (!canBuildFreeRoad()) return false;
         this.roads.removeFirst();
+        checkLongestRoad();
         return true;
+    }
+
+    public void checkLongestRoad() {
+        //TODO
     }
 
     public boolean canBuildVillage() {
@@ -162,6 +175,7 @@ public class Player {
     public boolean buildVillage() {
         if (!canBuildVillage()) return false;
         this.buildItem(this.villages.removeFirst());
+        addVictoryPoints(1);
         return true;
     }
 
@@ -172,6 +186,7 @@ public class Player {
     public boolean buildFreeVillage() {
         if (!canBuildFreeVillage()) return false;
         this.villages.removeFirst();
+        addVictoryPoints(1);
         return true;
     }
 
@@ -183,6 +198,7 @@ public class Player {
         if (!canBuildCity()) return false;
         buildItem(this.cities.removeFirst());
         this.villages.add(new VillageItem());
+        addVictoryPoints(1);
         return true;
     }
 
@@ -238,6 +254,13 @@ public class Player {
         }
     }
 
+    public void addVictoryPoints(int points) {
+        victoryPoints += points;
+        if (victoryPoints >= pointsToWin) {
+            game.sendWin(this);
+        }
+    }
+
     public int getRoadNumber() {
         return roads.size();
     }
@@ -258,5 +281,43 @@ public class Player {
         return usedDevelopments;
     }
 
+    public DevelopmentItem getDevelopmentCard(String type) {
+        DevelopmentType cardType;
+        switch (type) {
+            case "knight":
+                cardType = DevelopmentType.knight;
+                break;
+            case "development":
+                cardType = DevelopmentType.development;
+                break;
+            case "roadwork":
+                cardType = DevelopmentType.roadwork;
+                break;
+            case "monopoly":
+                cardType = DevelopmentType.monopoly;
+                break;
+            case "victoryPoint":
+                cardType = DevelopmentType.victoryPoint;
+                break;
+            default:
+                return null;
+        }
+
+        for (DevelopmentItem card: developments) {
+            if (card.getType() == cardType) return card;
+        }
+
+        return null;
+    }
+
+    public void playDevelopmentCard(DevelopmentItem card) {
+        developments.remove(card);
+        usedDevelopments.add(card);
+        if (card.getType() == DevelopmentType.knight) checkMostKnights();
+    }
+
+    public void checkMostKnights() {
+        //TODO
+    }
 
 }

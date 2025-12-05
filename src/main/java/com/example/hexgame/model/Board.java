@@ -27,6 +27,10 @@ public class Board implements Serializable {
     private int stonePorts = 1;
     private int generalPorts = 4;
 
+
+    //TODO build, push to server
+    //TODO make variable
+
     private int[] numbers = new int[] {0, 0, 1, 2, 2, 2, 2, 0, 2, 2, 2, 2, 1};
     int[] tilesPerRow = new int[]{3, 4, 5, 4, 3};
     int[] nodesPerRow = new int[] {3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3};

@@ -54,7 +54,7 @@ public class GameManagerService {
             if (gi.getPlayers().size() == 0) {
                 gi.setOwnerId(userId);
             }
-            Player p = new Player(userId, requestedName, gi.getBank());
+            Player p = new Player(userId, requestedName, gi.getBank(), gi);
             gi.getPlayers().put(userId, p);
             playerToGame.put(userId, gameId);
             gi.sendMessage("JOINED_GAME", requestedName, "", requestedName);
@@ -128,6 +128,19 @@ public class GameManagerService {
         try {
             if (!gi.getPlayers().containsKey(playerId)) return false;
             return gi.buyDevelopment(playerId);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean playDevelopment(String gameId, String playerId, String type) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.playDevelopment(playerId, type);
         } finally {
             gi.getLock().unlock();
         }

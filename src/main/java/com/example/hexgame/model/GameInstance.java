@@ -248,6 +248,44 @@ public class GameInstance {
         return true;
     }
 
+    public boolean playDevelopment(String playerId, String type) {
+        //TODO use in frontend
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        Player player = players.get(playerId);
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                DevelopmentItem card = player.getDevelopmentCard(type);
+                switch (card.getType()) {
+                    case knight:
+                        //TODO
+                        break;
+                    case development:
+                        //TODO
+                        break;
+                    case roadwork:
+                        //TODO
+                        break;
+                    case monopoly:
+                        //TODO
+                        break;
+                    case victoryPoint:
+                        player.addVictoryPoints(1);
+                        break;
+                }                
+                player.playDevelopmentCard(card);
+                sendMessage("PLAYED_DEVELOPMENT", playerId, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public void sendWin(Player player) {
+        //TODO handle in frontend
+        sendMessage("WON", player.getUserId(), "", player.getName());
+    }
+
     //TODO fix logic, right now port means getting ressource cheap not giving it as valuavle
     public boolean bankTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
