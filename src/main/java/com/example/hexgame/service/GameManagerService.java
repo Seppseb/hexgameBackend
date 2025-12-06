@@ -16,6 +16,8 @@ public class GameManagerService {
     // optional index of userId -> gameId (fast lookup)
     private final ConcurrentMap<String, String> playerToGame = new ConcurrentHashMap<>();
 
+    private final ConcurrentMap<String, String> playerToName = new ConcurrentHashMap<>();
+
     private final SimpMessagingTemplate messagingTemplate;
 
     public GameManagerService(SimpMessagingTemplate messagingTemplate) {
@@ -57,6 +59,7 @@ public class GameManagerService {
             Player p = new Player(userId, requestedName, gi.getBank(), gi);
             gi.getPlayers().put(userId, p);
             playerToGame.put(userId, gameId);
+            playerToName.put(userId, requestedName);
             gi.sendMessage("JOINED_GAME", requestedName, "", requestedName);
             return JoinResult.success(userId, gameId, requestedName);
         } finally {
@@ -198,6 +201,12 @@ public class GameManagerService {
         } finally {
             gi.getLock().unlock();
         }
+    }
+
+    public String getPlayerName(String playerId) {
+        if (playerId == null) return "";
+        if (!playerToName.containsKey(playerId)) return "";
+        return playerToName.get(playerId);
     }
 
 

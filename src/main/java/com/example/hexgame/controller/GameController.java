@@ -65,17 +65,32 @@ public class GameController {
             userId = r.userId;
             gameId = r.gameId;
 
-            Cookie cookie = new Cookie("userId", r.userId);
-            cookie.setPath("/");
-            cookie.setHttpOnly(false);
-            cookie.setMaxAge(60 * 60 * 24 * 30);
-            response.addCookie(cookie);
 
-            Cookie nameCookie = new Cookie("username", r.name);
-            nameCookie.setPath("/");
-            nameCookie.setHttpOnly(false);
-            nameCookie.setMaxAge(60 * 60 * 24 * 30);
-            response.addCookie(nameCookie);
+            // --- START COOKIE FIX ---
+        
+            // The SameSite attribute cannot be set directly on the Cookie object
+            // You must manually construct the Set-Cookie header string.
+
+            // 1. Define the cookie values
+            String userIdValue = r.userId;
+            int maxAge = 60 * 60 * 24 * 30; // 30 days
+            String path = "/";
+            
+            // 2. Construct the Secure and SameSite=None header string
+            // The components must be URL-encoded, but since r.userId is likely a UUID, it's usually safe.
+            
+            // Constructing the header for userId
+            String userIdCookieHeader = String.format(
+                "userId=%s; Path=%s; Max-Age=%d; Secure; SameSite=None", 
+                userIdValue, 
+                path, 
+                maxAge
+            );
+            response.addHeader("Set-Cookie", userIdCookieHeader);
+            // --- END COOKIE FIX ---
+
+
+
         }
         // success response (JSON)
         return ResponseEntity.ok(Map.of(
@@ -91,6 +106,13 @@ public class GameController {
         if (userId == null) return ResponseEntity.badRequest().body("no userId cookie");
         boolean ok = manager.leaveGame(userId);
         return ok ? ResponseEntity.ok("left") : ResponseEntity.badRequest().body("leave failed");
+    }
+
+    @GetMapping("/whoAmI")
+    public ResponseEntity<?> getCookieValues(@CookieValue(value = "userId", required = false) String userId) {
+        if (userId == null) return ResponseEntity.badRequest().body("no userId cookie");
+        String userName = manager.getPlayerName(userId);
+        return ResponseEntity.ok(userId + ";" + userName);
     }
 
     // Add endpoints to get game state, make moves, etc.
