@@ -228,30 +228,33 @@ public class Player {
     }
 
     public void buildPort(TileType res) {
-        switch (res) {
+        if (res != null) {
+            switch (res) {
                 case wood:
                     this.tradeFactor.put(TileType.wood, 2);
-                    break;
+                    return;
                 case clay:
                     this.tradeFactor.put(TileType.clay, 2);
-                    break;
+                    return;
                 case wheat:
                     this.tradeFactor.put(TileType.wheat, 2);
-                    break;
+                    return;
                 case wool:
                     this.tradeFactor.put(TileType.wool, 2);
-                    break;
+                    return;
                 case stone:
                     this.tradeFactor.put(TileType.stone, 2);
-                    break;
+                    return;
                 default:
-                    for (TileType type: this.tradeFactor.keySet()) {
-                        if (tradeFactor.get(type) > 3) {
-                            tradeFactor.put(type, 3);
-                        }
-                    }
                     break;
+            }
         }
+        for (TileType type: this.tradeFactor.keySet()) {
+            if (tradeFactor.get(type) > 3) {
+                tradeFactor.put(type, 3);
+            }
+        }
+
     }
 
     public void addVictoryPoints(int points) {

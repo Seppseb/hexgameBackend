@@ -61,7 +61,7 @@ public class Node {
         return true;
     }
 
-    public boolean buildInitialVillage(Player player) {
+    public boolean buildInitialVillage(Player player, boolean getRessources) {
         if(!canBuildInitialVillage(player)) return false;
         owner = player;
         color = player.getColor();
@@ -74,7 +74,14 @@ public class Node {
         }
 
         letPlayerBuildInitialRoad(player);
-
+        
+        if (getRessources) {
+            for (int i = 0; i < tiles.length; i++) {
+                if (tiles[i] != null) {
+                    tiles[i].handleInitialBuild(player);
+                }
+            }
+        }
         return true;
     }
 

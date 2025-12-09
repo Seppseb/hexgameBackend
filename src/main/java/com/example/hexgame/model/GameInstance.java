@@ -18,6 +18,9 @@ public class GameInstance {
     private int initialPlacementIndex = 0;
     private boolean initialIsPlacingRoad = false;
 
+    //TODO can be changed in future; not tested yet
+    private boolean canTradeMultipleRessourcesAtOnce = false;
+
     public boolean isInitialIsPlacingRoad() {
         return initialIsPlacingRoad;
     }
@@ -174,15 +177,8 @@ public class GameInstance {
                 if (initialIsPlacingRoad) return false;
                 if (!spot.canBuildInitialVillage(player) || !player.canBuildFreeVillage()) return false;
                 player.buildFreeVillage();
-                spot.buildInitialVillage(player);
-                //TODO handle in tile in buildinitialvillage with boolean get res
-                if (initialPlacementIndex > players.size()) {
-                    for (int i = 0; i < 3; i++) {
-                        if (spot.getTile(i) != null && spot.getTile(i).getType() != TileType.desert) {
-                            player.addRes(spot.getTile(i).getType(), 1);
-                        }
-                    }
-                }
+                boolean isSecondPlaceRound = initialPlacementIndex > players.size();
+                spot.buildInitialVillage(player, isSecondPlaceRound);
                 initialIsPlacingRoad = true;
                 sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
                 break;
@@ -286,7 +282,6 @@ public class GameInstance {
         sendMessage("WON", player.getUserId(), "", player.getName());
     }
 
-    //TODO fix logic, right now port means getting ressource cheap not giving it as valuavle
     public boolean bankTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         Player player = players.get(playerId);
@@ -298,18 +293,30 @@ public class GameInstance {
                 tradeRes.put(TileType.wheat, wheat);
                 tradeRes.put(TileType.wool, wool);
                 tradeRes.put(TileType.stone, stone);
-                int balance = 0;
+
+                int takenRessources = 0;
+                int canTakeRessources = 0;
+                double canTakeRessourcesFromOverFlow = 0;
                 for (TileType res: tradeRes.keySet()) {
-                    int amount = tradeRes.get(res);
-                    if (amount > 0) {
-                        if (!bank.hasRes(res, amount)) return false;
-                        balance+= player.getTradeFactor(res) * amount;
-                    } else if (amount < 0) {
-                        if (!player.hasRes(res, -amount)) return false;
-                        balance+= amount;
+                    int playerGetsAmount = tradeRes.get(res);
+                    if (playerGetsAmount > 0) {
+                        if (!bank.hasRes(res, playerGetsAmount)) return false;
+                        takenRessources += playerGetsAmount;
+                    } else if (playerGetsAmount < 0) {
+                        int playerGivesAmount = -playerGetsAmount;
+                        if (!player.hasRes(res, playerGivesAmount)) return false;
+                        int overflow = playerGivesAmount % player.getTradeFactor(res);
+                        playerGivesAmount-= overflow;
+                        canTakeRessourcesFromOverFlow += overflow / player.getTradeFactor(res);
+                        canTakeRessources += playerGivesAmount / player.getTradeFactor(res);
                     }
                 }
-                if (balance != 0) {
+                if (canTradeMultipleRessourcesAtOnce) {
+                    canTakeRessources += canTakeRessourcesFromOverFlow;
+                } else {
+                    if (canTakeRessourcesFromOverFlow != 0) return false;
+                }
+                if (takenRessources != canTakeRessources) {
                     return false;
                 }
                 for (TileType res: tradeRes.keySet()) {

@@ -44,6 +44,10 @@ public class Tile implements Serializable {
         }
     }
 
+    public void handleInitialBuild(Player player) {
+        player.addRes(this.type, 1);
+    }
+
     public String toString() {
         return type + ", " + number;
     }
