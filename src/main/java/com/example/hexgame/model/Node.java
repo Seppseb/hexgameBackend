@@ -116,6 +116,7 @@ public class Node {
 
     public boolean canBuildCity(Player player) {
         if (owner != player) return false;
+        if (buildFactor != 1) return false;
         return true;
     }
 

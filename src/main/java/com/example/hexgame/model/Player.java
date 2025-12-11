@@ -25,6 +25,8 @@ public class Player {
 
     private int playedKnights;
 
+    private int longestRoad;
+
     private ArrayDeque<DevelopmentItem> developments;
     private ArrayDeque<DevelopmentItem> usedDevelopments;
 
@@ -157,12 +159,10 @@ public class Player {
     public boolean buildRoad() {
         if (!canBuildRoad()) return false;
         this.buildItem(this.roads.removeFirst());
-        checkLongestRoad();
         return true;
     }
 
     public boolean canBuildFreeRoad(boolean initial) {
-        System.out.println(freeRoads);
         if (!initial && freeRoads < 1) return false;
         return this.roads.size() >= 1;
     }
@@ -171,12 +171,7 @@ public class Player {
         if (!canBuildFreeRoad(initial)) return false;
         if (!initial) freeRoads--;
         this.roads.removeFirst();
-        checkLongestRoad();
         return true;
-    }
-
-    public void checkLongestRoad() {
-        //TODO
     }
 
     public boolean canBuildVillage() {
@@ -343,19 +338,28 @@ public class Player {
     }
 
     public void addFreeRoads(int amount) {
-        System.out.println(freeRoads);
         int roadsLeft = this.roads.size();
         if (roadsLeft < amount) {
             amount = roadsLeft;
         }
         this.freeRoads+= amount;
-        System.out.println(freeRoads);
     }
 
     public int getPlayedKnights() {
         return playedKnights;
     }
 
+
+    public int getLongestRoad() {
+        return longestRoad;
+    }
+
+    
+    public void setLongestRoad(int longestRoad) {
+        this.longestRoad = longestRoad;
+    }
+
+    
     
 
 

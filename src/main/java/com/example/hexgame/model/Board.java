@@ -3,6 +3,7 @@ package com.example.hexgame.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -28,7 +29,6 @@ public class Board implements Serializable {
     private int generalPorts = 4;
 
 
-    //TODO build, push to server
     //TODO make variable
 
     private int[] numbers = new int[] {0, 0, 1, 2, 2, 2, 2, 0, 2, 2, 2, 2, 1};
@@ -42,8 +42,13 @@ public class Board implements Serializable {
     private Node [][] nodes;
     private Path [][] paths;
 
+    private LongestRoadCard longestRoadCard;
+
     public Board(Random random) {
         this.random = random;
+
+        this.longestRoadCard = new LongestRoadCard();
+
         generateTiles();
         generateNodes();
         generatePaths();
@@ -410,6 +415,54 @@ public class Board implements Serializable {
         for (Tile tile: tileList) {
             tile.handleDiceThrow();
         }
+    }
+
+    public void checkLongestRoad() {
+        HashMap<Player, Integer> newLongestRoad = new HashMap<Player, Integer>();
+        int max = 0;
+        for (int ri = 0; ri < paths.length; ri++) {
+            Path [] row = paths[ri];
+            for (int i = 0; i < row.length; i++) {
+                Path path = row[i];
+                if (path.getOwner() == null) continue;
+                HashSet<Path> used = new HashSet<Path>();
+                used.add(path);
+                int length1 = checkRoadLength(path, used, path.getNodes(0));
+                int length2 = checkRoadLength(path, used, path.getNodes(1));
+                int length = length1 > length2 ? length1 : length2;
+                if (length > max) max = length;
+                if (newLongestRoad.get(path.getOwner()) == null || length > newLongestRoad.get(path.getOwner())) {
+                    newLongestRoad.put(path.getOwner(), length);
+                }
+            }
+        }
+
+        for (Player player: newLongestRoad.keySet()) {
+            player.setLongestRoad(newLongestRoad.get(player));
+        }
+
+        this.longestRoadCard.checkOwnerChange(newLongestRoad, max);
+    }
+
+    public int checkRoadLength(Path path, HashSet<Path> used, Node lastNode) {
+        int max = used.size();
+        for (int ni = 0; ni < 2; ni++) {
+            Node node = path.getNodes(ni);
+            if (node == null) continue;
+            if (node == lastNode) continue;
+            if (node.getOwner() != null && node.getOwner() != path.getOwner()) continue;
+            for (int pi = 0; pi < 3; pi++) {
+                Path next = node.getPath(pi);
+                if (next == null) continue;
+                if (next.getOwner() != path.getOwner()) continue;
+                if (used.contains(next)) continue;
+                used.add(next);
+                int newLength = checkRoadLength(next, used, node);
+                max = newLength > max ? newLength : max;
+                used.remove(next);
+            }
+        }
+        return max;
     }
 
 }

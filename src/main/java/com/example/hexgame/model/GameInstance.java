@@ -106,9 +106,11 @@ public class GameInstance {
         colors.add("green");
         colors.add("yellow");
         for (Player player : players.values()) {
-            //player.addRes(TileType.stone, 9);
-            //player.addRes(TileType.wool, 9);
-            //player.addRes(TileType.wheat, 9);
+            //player.addRes(TileType.wood, 19);
+            //player.addRes(TileType.clay, 19);
+            //player.addRes(TileType.wheat, 19);
+            //player.addRes(TileType.wool, 19);
+            //player.addRes(TileType.stone, 19);
             int i = random.nextInt(colors.size());
             player.setColor(colors.get(i));
             colors.remove(i);
@@ -188,6 +190,7 @@ public class GameInstance {
                     if (!player.canBuildVillage() || !spot.canBuildVillage(player)) return false;
                     player.buildVillage();
                     spot.buildVillage(player);
+                    board.checkLongestRoad(); //since villages could break up roads
                     sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
                 } else {
                     if (!player.canBuildCity() || !spot.canBuildCity(player)) return false;
@@ -215,7 +218,6 @@ public class GameInstance {
                 if (!path.canBuildInitialRoad(player) || !player.canBuildFreeRoad(true)) return false;
                 player.buildFreeRoad(true);
                 path.buildInitialRoad(player);
-                sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 initialIsPlacingRoad = false;
                 nextInitialBuild();
                 break;
@@ -227,11 +229,12 @@ public class GameInstance {
                 else player.buildRoad();
                 isWaitingForFreeRoadPlacement = player.canBuildFreeRoad(false);
                 path.buildRoad(player);
-                sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 break;
             default:
                 return false;
         }
+        this.board.checkLongestRoad();
+        sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
         return true;
     }
 
