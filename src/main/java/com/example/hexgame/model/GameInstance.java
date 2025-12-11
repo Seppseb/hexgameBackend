@@ -17,6 +17,12 @@ public class GameInstance {
     private Player[] initialPlacementOrder;
     private int initialPlacementIndex = 0;
     private boolean initialIsPlacingRoad = false;
+    private boolean isWaitingForPlayerRessourceChange = false;
+    private boolean isWaitingForFreeRoadPlacement = false;
+
+    private MostKnightsCard mostKnightsCard;
+
+    private TradeOffer currentTradeOffer;
 
     //TODO can be changed in future; not tested yet
     private boolean canTradeMultipleRessourcesAtOnce = false;
@@ -41,6 +47,7 @@ public class GameInstance {
         this.board = new Board(this.random);
         this.bank = new Bank(this.random);
         this.messagingTemplate = messagingTemplate;
+        this.mostKnightsCard = new MostKnightsCard();
     }
 
     public int[] throw2Dice() {
@@ -99,6 +106,9 @@ public class GameInstance {
         colors.add("green");
         colors.add("yellow");
         for (Player player : players.values()) {
+            //player.addRes(TileType.stone, 9);
+            //player.addRes(TileType.wool, 9);
+            //player.addRes(TileType.wheat, 9);
             int i = random.nextInt(colors.size());
             player.setColor(colors.get(i));
             colors.remove(i);
@@ -143,26 +153,15 @@ public class GameInstance {
         );
     }
 
-    public void nextAction() {
-
-    }
-
-    // getters/setters for id, board, players, state, lastActive
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public Board getBoard() { return board; }
-    public Map<String, Player> getPlayers() { return players; }
-    public GameState getState() { return state; }
-    public void setState(GameState state) { this.state = state; }
-    public Instant getLastActive() { return lastActive; }
-    public void touch() { this.lastActive = Instant.now(); }
-
-
-    public String getOwnerId() {
-        return ownerId;
-    }
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
+    public void nextInitialBuild() {
+        if (initialPlacementIndex >= initialPlacementOrder.length) {
+            state = GameState.IN_PROGRESS;
+            startTurn();
+            return;
+        }
+        currentPlayer = initialPlacementOrder[initialPlacementIndex];
+        initialPlacementIndex++;
+        sendMessage("INITIAL_PLACE", "", currentPlayer.getUserId(), currentPlayer.getName());    
     }
 
 
@@ -171,6 +170,8 @@ public class GameInstance {
         Player player = players.get(playerId);
         if (board.getNodes().length <= row || board.getNodes()[row].length <= col ) return false;
         Node spot = board.getNodes()[row][col];
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
         if (spot.getBuildFactor() > 1) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
@@ -206,20 +207,25 @@ public class GameInstance {
         Player player = players.get(playerId);
         if (board.getPaths().length <= row || board.getPaths()[row].length <= col ) return false;
         Path path = board.getPaths()[row][col];
+        if (isWaitingForPlayerRessourceChange) return false;
         if (path.getOwner() != null) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
                 if (!initialIsPlacingRoad) return false;
-                if (!path.canBuildInitialRoad(player) || !player.canBuildFreeRoad()) return false;
-                player.buildFreeRoad();
+                if (!path.canBuildInitialRoad(player) || !player.canBuildFreeRoad(true)) return false;
+                player.buildFreeRoad(true);
                 path.buildInitialRoad(player);
                 sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 initialIsPlacingRoad = false;
                 nextInitialBuild();
                 break;
             case IN_PROGRESS:
-                if (!player.canBuildRoad() || !path.canBuildRoad(player)) return false;
-                player.buildRoad();
+                boolean isFree = player.canBuildFreeRoad(false);
+                if (!isFree && !player.canBuildRoad()) return false;
+                if (!path.canBuildRoad(player)) return false;
+                if (isFree) player.buildFreeRoad(false);
+                else player.buildRoad();
+                isWaitingForFreeRoadPlacement = player.canBuildFreeRoad(false);
                 path.buildRoad(player);
                 sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 break;
@@ -231,6 +237,8 @@ public class GameInstance {
 
     public boolean buyDevelopment(String playerId) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -245,30 +253,43 @@ public class GameInstance {
     }
 
     public boolean playDevelopment(String playerId, String type) {
-        //TODO use in frontend
         if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
                 DevelopmentItem card = player.getDevelopmentCard(type);
+                player.playDevelopmentCard(card);
                 switch (card.getType()) {
                     case knight:
-                        //TODO
+                        //TODO dont let player do stuff until finished moving knight + taking res
+                        //TODO same imp like 7
+                        this.mostKnightsCard.checkOwnerChange(player);
                         break;
                     case development:
-                        //TODO
+                        int takeAmount = this.bank.getTotalResBalance() < 2 ? this.bank.getTotalResBalance() : 2;
+                        player.addToResDebt(-takeAmount);
+                        this.upDateWaitingForResDebt();
                         break;
                     case roadwork:
-                        //TODO
+                        player.addFreeRoads(2);
+                        isWaitingForFreeRoadPlacement = player.canBuildFreeRoad(false);
                         break;
                     case monopoly:
-                        //TODO
+                        for (Player victim : players.values()) {
+                            if (victim == player) continue;
+                            //TODO needs tile value;
+                            TileType resType = TileType.wood;
+                            int amount = victim.getResBalance().get(resType);
+                            victim.takeRes(resType, amount);
+                            player.addRes(resType, amount);
+                        }
                         break;
                     case victoryPoint:
                         player.addVictoryPoints(1);
                         break;
                 }                
-                player.playDevelopmentCard(card);
                 sendMessage("PLAYED_DEVELOPMENT", playerId, "", player.getName());
                 break;
             default:
@@ -284,6 +305,8 @@ public class GameInstance {
 
     public boolean bankTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -335,15 +358,230 @@ public class GameInstance {
         return true;
     }
 
-    public void nextInitialBuild() {
-        if (initialPlacementIndex >= initialPlacementOrder.length) {
-            state = GameState.IN_PROGRESS;
-            startTurn();
-            return;
+    public boolean askPlayerTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
+        Player player = players.get(playerId);
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                if (wood < 0 && !player.hasRes(TileType.wood, -wood)) return false;
+                if (clay < 0 && !player.hasRes(TileType.clay, -clay)) return false;
+                if (wheat < 0 && !player.hasRes(TileType.wheat, -wheat)) return false;
+                if (wool < 0 && !player.hasRes(TileType.wool, -wool)) return false;
+                if (stone < 0 && !player.hasRes(TileType.stone, -stone)) return false;
+                this.currentTradeOffer = new TradeOffer(playerId, wood, clay, wheat, wool, stone);
+                sendMessage("NEW_TRADE_OFFER", playerId, "", player.getName());
+                break;
+            default:
+                return false;
         }
-        currentPlayer = initialPlacementOrder[initialPlacementIndex];
-        initialPlacementIndex++;
-        sendMessage("INITIAL_PLACE", "", currentPlayer.getUserId(), currentPlayer.getName());    
+        return true;
+    }
+
+    public boolean cancelPlayerTrade(String playerId) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
+        Player player = players.get(playerId);
+        if (currentTradeOffer == null) return false;
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                this.currentTradeOffer = null;
+                sendMessage("CANCLED_TRADE_OFFER", playerId, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public boolean acceptPlayerTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (currentPlayer.getUserId().equals(playerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
+        Player player = players.get(playerId);
+        if (currentTradeOffer == null) return false;
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                if (wood > 0 && !player.hasRes(TileType.wood, wood)) return false;
+                if (clay > 0 && !player.hasRes(TileType.clay, clay)) return false;
+                if (wheat > 0 && !player.hasRes(TileType.wheat, wheat)) return false;
+                if (wool > 0 && !player.hasRes(TileType.wool, wool)) return false;
+                if (stone > 0 && !player.hasRes(TileType.stone, stone)) return false;
+                if (!this.currentTradeOffer.hasValues(wood, clay, wheat, wool, stone)) return false;
+                this.currentTradeOffer.accept(playerId);
+                sendMessage("ACCEPTED_TRADE_OFFER", playerId, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public boolean declinePlayerTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (currentPlayer.getUserId().equals(playerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
+        Player player = players.get(playerId);
+        if (currentTradeOffer == null) return false;
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                if (!this.currentTradeOffer.hasValues(wood, clay, wheat, wool, stone)) return false;
+                this.currentTradeOffer.decline(playerId);
+                sendMessage("DECLINED_TRADE_OFFER", playerId, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public boolean finishPlayerTrade(String playerId, String partnerId) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (currentPlayer.getUserId().equals(partnerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
+        if (currentTradeOffer == null) return false;
+        if (!currentTradeOffer.getAcceptersId().get(partnerId)) return false;
+        Player player = players.get(playerId);
+        Player partner = players.get(partnerId);
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                int wood = this.currentTradeOffer.getWood();
+                int clay = this.currentTradeOffer.getClay();
+                int wheat = this.currentTradeOffer.getWheat();
+                int wool = this.currentTradeOffer.getWool();
+                int stone = this.currentTradeOffer.getStone();
+
+                if (wood < 0 && !player.hasRes(TileType.wood, -wood)) return false;
+                if (clay < 0 && !player.hasRes(TileType.clay, -clay)) return false;
+                if (wheat < 0 && !player.hasRes(TileType.wheat, -wheat)) return false;
+                if (wool < 0 && !player.hasRes(TileType.wool, -wool)) return false;
+                if (stone < 0 && !player.hasRes(TileType.stone, -stone)) return false;
+
+                if (wood > 0 && !partner.hasRes(TileType.wood, wood)) return false;
+                if (clay > 0 && !partner.hasRes(TileType.clay, clay)) return false;
+                if (wheat > 0 && !partner.hasRes(TileType.wheat, wheat)) return false;
+                if (wool > 0 && !partner.hasRes(TileType.wool, wool)) return false;
+                if (stone > 0 && !partner.hasRes(TileType.stone, stone)) return false;
+
+                if (wood != 0) if (wood > 0) {
+                    partner.takeRes(TileType.wood, wood);
+                    player.addRes(TileType.wood, wood);
+                } else {
+                    player.takeRes(TileType.wood, -wood);
+                    partner.addRes(TileType.wood, -wood);
+                }
+                if (clay != 0) if (clay > 0) {
+                    partner.takeRes(TileType.clay, clay);
+                    player.addRes(TileType.clay, clay);
+                } else {
+                    player.takeRes(TileType.clay, -clay);
+                    partner.addRes(TileType.clay, -clay);
+                }
+                if (wheat != 0) if (wheat > 0) {
+                    partner.takeRes(TileType.wheat, wheat);
+                    player.addRes(TileType.wheat, wheat);
+                } else {
+                    player.takeRes(TileType.wheat, -wheat);
+                    partner.addRes(TileType.wheat, -wheat);
+                }
+                if (wool != 0) if (wool > 0) {
+                    partner.takeRes(TileType.wool, wool);
+                    player.addRes(TileType.wool, wool);
+                } else {
+                    player.takeRes(TileType.wool, -wool);
+                    partner.addRes(TileType.wool, -wool);
+                }
+                if (stone != 0) if (stone > 0) {
+                    partner.takeRes(TileType.stone, stone);
+                    player.addRes(TileType.stone, stone);
+                } else {
+                    player.takeRes(TileType.stone, -stone);
+                    partner.addRes(TileType.stone, -stone);
+                }
+                this.currentTradeOffer = null;
+                sendMessage("FINISHED_TRADE_OFFER", playerId, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public boolean settleDebt(String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (!isWaitingForPlayerRessourceChange) return false;
+        Player player = players.get(playerId);
+        if (player.getResDebt() == 0) return false;
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                HashMap<TileType, Integer> tradeRes = new HashMap<TileType, Integer>();
+                tradeRes.put(TileType.wood, wood);
+                tradeRes.put(TileType.clay, clay);
+                tradeRes.put(TileType.wheat, wheat);
+                tradeRes.put(TileType.wool, wool);
+                tradeRes.put(TileType.stone, stone);
+
+                int takenRessources = 0;
+                int givenRessources = 0;
+                for (TileType res: tradeRes.keySet()) {
+                    int playerGetsAmount = tradeRes.get(res);
+                    if (playerGetsAmount > 0) {
+                        if (!bank.hasRes(res, playerGetsAmount)) return false;
+                        takenRessources += playerGetsAmount;
+                    } else if (playerGetsAmount < 0) {
+                        int playerGivesAmount = -playerGetsAmount;
+                        if (!player.hasRes(res, playerGivesAmount)) return false;
+                    }
+                }
+                if (player.getResDebt() < 0) {
+                    if (givenRessources != 0) return false;
+                    if (-player.getResDebt() != takenRessources) return false;
+                } else {
+                    if (takenRessources != 0) return false;
+                    if (player.getResDebt() != givenRessources) return false;
+                }
+                for (TileType res: tradeRes.keySet()) {
+                    int amount = tradeRes.get(res);
+                    if (amount > 0) {
+                        player.addRes(res, amount);
+                        player.addToResDebt(amount);
+                    } else if (amount < 0) {
+                        player.takeRes(res, -amount);
+                        player.addToResDebt(-amount);
+                    }
+                }
+                this.upDateWaitingForResDebt();
+                sendMessage("SETTLED_DEBT", playerId, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public void upDateWaitingForResDebt() {
+        for (Player player: this.players.values()) {
+            if (player.getResDebt() != 0) {
+                this.isWaitingForPlayerRessourceChange = true;
+                return;
+            }
+        }
+        this.isWaitingForPlayerRessourceChange = false;
+    }
+
+
+    public boolean endTurn(String playerId) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
+        this.currentTradeOffer = null;
+        currentPlayer = currentPlayer.getNextPlayer();
+        startTurn();
+        //sendMessage("END_TURN", "", currentPlayer.getUserId());
+        return true;       
     }
 
     public void startTurn() {
@@ -352,13 +590,7 @@ public class GameInstance {
         sendMessage("START_TURN", "" + d[0] + "" + d[1], currentPlayer.getUserId(), currentPlayer.getName());            
     }
 
-    public boolean endTurn(String playerId) {
-        if (!currentPlayer.getUserId().equals(playerId)) return false;
-        currentPlayer = currentPlayer.getNextPlayer();
-        startTurn();
-        //sendMessage("END_TURN", "", currentPlayer.getUserId());
-        return true;       
-    }
+    
 
     public Bank getBank() {
         return bank;
@@ -375,4 +607,25 @@ public class GameInstance {
     public void setCurrentPlayer(Player currentPlayer) {
         this.currentPlayer = currentPlayer;
     }
+
+    public TradeOffer getCurrentTradeOffer() {
+        return currentTradeOffer;
+    }
+
+    public String getId() { return id; }
+    public Board getBoard() { return board; }
+    public Map<String, Player> getPlayers() { return players; }
+    public GameState getState() { return state; }
+    public Instant getLastActive() { return lastActive; }
+    public void touch() { this.lastActive = Instant.now(); }
+
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    
 }

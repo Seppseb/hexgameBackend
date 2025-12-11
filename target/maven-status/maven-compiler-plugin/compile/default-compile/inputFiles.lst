@@ -4,6 +4,7 @@ C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Node.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\dto\GameEvent.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\service\GameManagerService.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\ShopItem.java
+C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\MostKnightsCard.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Port.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\config\WebConfig.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Board.java
@@ -13,6 +14,7 @@ C:\dev\hexgameBackend\src\main\java\com\example\hexgame\HexgameBackendApplicatio
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Player.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Tile.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\GameState.java
+C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\TradeOffer.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\dto\JoinResponse.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\GameInstance.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\DevelopmentType.java

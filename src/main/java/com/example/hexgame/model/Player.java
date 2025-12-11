@@ -20,6 +20,11 @@ public class Player {
 
     private HashMap<TileType, Integer> tradeFactor; 
 
+    private int resDebt;
+    private int freeRoads;
+
+    private int playedKnights;
+
     private ArrayDeque<DevelopmentItem> developments;
     private ArrayDeque<DevelopmentItem> usedDevelopments;
 
@@ -28,7 +33,7 @@ public class Player {
     private ArrayDeque<VillageItem> villages;
     private ArrayDeque<CityItem> cities;
 
-    //TODO make variable, also other stuff like road ammount and other things
+    //TODO make variable, also other stuff like road amount and other things
     private int pointsToWin = 10;
 
     @JsonIgnore
@@ -52,6 +57,9 @@ public class Player {
         this.bank = bank;
         this.game = gameInstance;
         this.victoryPoints = 0;
+        this.resDebt = 0;
+        this.freeRoads = 0;
+        this.playedKnights = 0;
 
         this.roads = new ArrayDeque<RoadItem>();
         for (int i = 0; i < 15; i++) {
@@ -153,12 +161,15 @@ public class Player {
         return true;
     }
 
-    public boolean canBuildFreeRoad() {
+    public boolean canBuildFreeRoad(boolean initial) {
+        System.out.println(freeRoads);
+        if (!initial && freeRoads < 1) return false;
         return this.roads.size() >= 1;
     }
 
-    public boolean buildFreeRoad() {
-        if (!canBuildFreeRoad()) return false;
+    public boolean buildFreeRoad(boolean initial) {
+        if (!canBuildFreeRoad(initial)) return false;
+        if (!initial) freeRoads--;
         this.roads.removeFirst();
         checkLongestRoad();
         return true;
@@ -316,11 +327,36 @@ public class Player {
     public void playDevelopmentCard(DevelopmentItem card) {
         developments.remove(card);
         usedDevelopments.add(card);
-        if (card.getType() == DevelopmentType.knight) checkMostKnights();
+        if (card.getType() == DevelopmentType.knight) playedKnights++;
+    }
+    
+    public int getVictoryPoints() {
+        return victoryPoints;
     }
 
-    public void checkMostKnights() {
-        //TODO
+    public void addToResDebt(int amount) {
+        this.resDebt+= amount;
     }
+
+    public int getResDebt() {
+        return resDebt;
+    }
+
+    public void addFreeRoads(int amount) {
+        System.out.println(freeRoads);
+        int roadsLeft = this.roads.size();
+        if (roadsLeft < amount) {
+            amount = roadsLeft;
+        }
+        this.freeRoads+= amount;
+        System.out.println(freeRoads);
+    }
+
+    public int getPlayedKnights() {
+        return playedKnights;
+    }
+
+    
+
 
 }

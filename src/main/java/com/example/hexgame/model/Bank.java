@@ -75,6 +75,14 @@ public class Bank {
         return resBalance.get(type) >= amount;
     }
 
+    public int getTotalResBalance() {
+        int total = 0;
+        for (int amount: this.resBalance.values()) {
+            total += amount;
+        }
+        return total;
+    }
+
     public int takeRes(TileType type, int amount) {
         if (resBalance.get(type) == null) return 0;
         int avaliableAmount = resBalance.get(type);

@@ -1,4 +1,5 @@
 com\example\hexgame\model\Player.class
+com\example\hexgame\model\MostKnightsCard.class
 com\example\hexgame\dto\CreateGameRequest.class
 com\example\hexgame\model\CityItem.class
 com\example\hexgame\config\WebSocketConfig.class
@@ -11,6 +12,7 @@ com\example\hexgame\model\GameInstance$1.class
 com\example\hexgame\model\Tile.class
 com\example\hexgame\HexgameBackendApplication.class
 com\example\hexgame\model\VillageItem.class
+com\example\hexgame\model\TradeOffer.class
 com\example\hexgame\model\GameState.class
 com\example\hexgame\controller\GameController.class
 com\example\hexgame\model\TileType.class

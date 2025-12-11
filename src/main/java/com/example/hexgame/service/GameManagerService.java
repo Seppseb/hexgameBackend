@@ -162,6 +162,84 @@ public class GameManagerService {
         }
     }
 
+    public boolean askPlayerTrade(String gameId, String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.askPlayerTrade(playerId, wood, clay, wheat, wool, stone);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean acceptPlayerTrade(String gameId, String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.acceptPlayerTrade(playerId, wood, clay, wheat, wool, stone);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean cancelPlayerTrade(String gameId, String playerId) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.cancelPlayerTrade(playerId);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean declinePlayerTrade(String gameId, String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.declinePlayerTrade(playerId, wood, clay, wheat, wool, stone);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean finishPlayerTrade(String gameId, String playerId, String partnerId) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.finishPlayerTrade(playerId, partnerId);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean settleDebt(String gameId, String playerId, int wood, int clay, int wheat, int wool, int stone) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.settleDebt(playerId, wood, clay, wheat, wool, stone);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
     public boolean endTurn(String gameId, String playerId) {
         if (gameId == null) return false;
         GameInstance gi = games.get(gameId);

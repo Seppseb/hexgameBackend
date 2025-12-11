@@ -371,6 +371,233 @@ public class GameController {
         ));
     }
 
+    @PostMapping("/{gameId}/askPlayerTrade/{wood}/{clay}/{wheat}/{wool}/{stone}")
+    public ResponseEntity<?> askPlayerTrade(@PathVariable String gameId,
+                                    @PathVariable int wood,
+                                    @PathVariable int clay,
+                                    @PathVariable int wheat,
+                                    @PathVariable int wool,
+                                    @PathVariable int stone,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.askPlayerTrade(gameId, userId, wood, clay, wheat, wool, stone);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "trading failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "trade started"
+        ));
+    }
+
+    @PostMapping("/{gameId}/cancelPlayerTrade")
+    public ResponseEntity<?> cancelPlayerTrade(@PathVariable String gameId,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.cancelPlayerTrade(gameId, userId);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "cancel trading failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "trade successfully cancled"
+        ));
+    }
+
+    @PostMapping("/{gameId}/acceptPlayerTrade/{wood}/{clay}/{wheat}/{wool}/{stone}")
+    public ResponseEntity<?> acceptPlayerTrade(@PathVariable String gameId,
+                                    @PathVariable int wood,
+                                    @PathVariable int clay,
+                                    @PathVariable int wheat,
+                                    @PathVariable int wool,
+                                    @PathVariable int stone,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.acceptPlayerTrade(gameId, userId, wood, clay, wheat, wool, stone);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "trading failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "trade continued"
+        ));
+    }
+
+    @PostMapping("/{gameId}/declinePlayerTrade/{wood}/{clay}/{wheat}/{wool}/{stone}")
+    public ResponseEntity<?> declinePlayerTrade(@PathVariable String gameId,
+                                    @PathVariable int wood,
+                                    @PathVariable int clay,
+                                    @PathVariable int wheat,
+                                    @PathVariable int wool,
+                                    @PathVariable int stone,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.declinePlayerTrade(gameId, userId, wood, clay, wheat, wool, stone);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "trading failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "trade successfully declined"
+        ));
+    }
+
+    @PostMapping("/{gameId}/finishPlayerTrade/{partnerId}")
+    public ResponseEntity<?> finishPlayerTrade(@PathVariable String gameId,
+                                    @PathVariable String partnerId,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.finishPlayerTrade(gameId, userId, partnerId);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "trading failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "trade finished"
+        ));
+    }
+
+    @PostMapping("/{gameId}/settleDebt/{wood}/{clay}/{wheat}/{wool}/{stone}")
+    public ResponseEntity<?> settleDebt(@PathVariable String gameId,
+                                    @PathVariable int wood,
+                                    @PathVariable int clay,
+                                    @PathVariable int wheat,
+                                    @PathVariable int wool,
+                                    @PathVariable int stone,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.settleDebt(gameId, userId, wood, clay, wheat, wool, stone);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "settleing debt failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "debt settled"
+        ));
+    }
+
+    
+
     @PostMapping("/{gameId}/endTurn")
     public ResponseEntity<?> endTurn(@PathVariable String gameId,
                                     @CookieValue(value = "userId", required = false) String userId,

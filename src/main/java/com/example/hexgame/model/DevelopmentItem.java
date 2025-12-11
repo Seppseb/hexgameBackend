@@ -6,6 +6,8 @@ public class DevelopmentItem extends ShopItem {
 
     private DevelopmentType type;
 
+    //TODO add bought in round counter to stop from using in same round
+
     public DevelopmentItem(DevelopmentType type) {
         this.type = type;
 
