@@ -106,11 +106,11 @@ public class GameInstance {
         colors.add("green");
         colors.add("yellow");
         for (Player player : players.values()) {
-            player.addRes(TileType.wood, 19);
-            player.addRes(TileType.clay, 19);
-            player.addRes(TileType.wheat, 19);
-            player.addRes(TileType.wool, 19);
-            player.addRes(TileType.stone, 19);
+            //player.addRes(TileType.wood, 19);
+            //player.addRes(TileType.clay, 19);
+            //player.addRes(TileType.wheat, 19);
+            //player.addRes(TileType.wool, 19);
+            //player.addRes(TileType.stone, 19);
             int i = random.nextInt(colors.size());
             player.setColor(colors.get(i));
             colors.remove(i);
