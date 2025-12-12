@@ -106,11 +106,11 @@ public class GameInstance {
         colors.add("green");
         colors.add("yellow");
         for (Player player : players.values()) {
-            //player.addRes(TileType.wood, 19);
-            //player.addRes(TileType.clay, 19);
-            //player.addRes(TileType.wheat, 19);
-            //player.addRes(TileType.wool, 19);
-            //player.addRes(TileType.stone, 19);
+            player.addRes(TileType.wood, 19);
+            player.addRes(TileType.clay, 19);
+            player.addRes(TileType.wheat, 19);
+            player.addRes(TileType.wool, 19);
+            player.addRes(TileType.stone, 19);
             int i = random.nextInt(colors.size());
             player.setColor(colors.get(i));
             colors.remove(i);
@@ -255,7 +255,7 @@ public class GameInstance {
         return true;
     }
 
-    public boolean playDevelopment(String playerId, String type) {
+    public boolean playDevelopment(String playerId, String type, String resType) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
@@ -280,13 +280,30 @@ public class GameInstance {
                         isWaitingForFreeRoadPlacement = player.canBuildFreeRoad(false);
                         break;
                     case monopoly:
+                        TileType choosenRes = null;
+                        switch (resType) {
+                            case "wood":
+                                choosenRes = TileType.wood;
+                                break;
+                            case "clay":
+                                choosenRes = TileType.clay;
+                                break;
+                            case "wheat":
+                                choosenRes = TileType.wheat;
+                                break;
+                            case "wool":
+                                choosenRes = TileType.wool;
+                                break;
+                            case "stone":
+                                choosenRes = TileType.stone;
+                                break;
+                            default: return false;
+                        }
                         for (Player victim : players.values()) {
                             if (victim == player) continue;
-                            //TODO needs tile value;
-                            TileType resType = TileType.wood;
-                            int amount = victim.getResBalance().get(resType);
-                            victim.takeRes(resType, amount);
-                            player.addRes(resType, amount);
+                            int amount = victim.getResBalance().get(choosenRes);
+                            victim.takeRes(choosenRes, amount);
+                            player.addRes(choosenRes, amount);
                         }
                         break;
                     case victoryPoint:

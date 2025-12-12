@@ -297,9 +297,10 @@ public class GameController {
         ));
     }
 
-    @PostMapping("/{gameId}/playDevelopment/{type}")
+    @PostMapping("/{gameId}/playDevelopment/{type}/{resType}")
     public ResponseEntity<?> playDevelopment(@PathVariable String gameId,
                                     @PathVariable String type,
+                                    @PathVariable String resType,
                                     @CookieValue(value = "userId", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
@@ -317,7 +318,7 @@ public class GameController {
                         .body(Map.of("success", false, "message", "game not found"));
         }
 
-        boolean success = manager.playDevelopment(gameId, userId, type);
+        boolean success = manager.playDevelopment(gameId, userId, type, resType);
 
         if (!success) {
             return ResponseEntity

@@ -136,14 +136,14 @@ public class GameManagerService {
         }
     }
 
-    public boolean playDevelopment(String gameId, String playerId, String type) {
+    public boolean playDevelopment(String gameId, String playerId, String type, String resType) {
         if (gameId == null) return false;
         GameInstance gi = games.get(gameId);
         if (gi == null) return false;
         gi.getLock().lock();
         try {
             if (!gi.getPlayers().containsKey(playerId)) return false;
-            return gi.playDevelopment(playerId, type);
+            return gi.playDevelopment(playerId, type, resType);
         } finally {
             gi.getLock().unlock();
         }
