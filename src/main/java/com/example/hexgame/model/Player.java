@@ -225,6 +225,14 @@ public class Player {
         return resBalance;
     }
 
+    public int getTotalResBalance() {
+        int total = 0;
+        for (int amount: this.resBalance.values()) {
+            total += amount;
+        }
+        return total;
+    }
+
     public HashMap<TileType, Integer> getTradeFactor() {
         return tradeFactor;
     }

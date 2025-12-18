@@ -43,6 +43,7 @@ public class Board implements Serializable {
     private Path [][] paths;
 
     private LongestRoadCard longestRoadCard;
+    private Robber robber;
 
     public Board(Random random) {
         this.random = random;
@@ -63,7 +64,7 @@ public class Board implements Serializable {
             for (int k = 0; k < row.length; k++) {
                 TileType type = drawType();
                 int number = type == TileType.desert ? 0 : drawNumber();
-                Tile tile = new Tile(type, number);
+                Tile tile = new Tile(type, number, this, i, k);
                 if (!tilesWithNumber.containsKey(number)) tilesWithNumber.put(number, new ArrayList<Tile>());
                 tilesWithNumber.get(number).add(tile);
                 row[k] = tile;
@@ -463,6 +464,14 @@ public class Board implements Serializable {
             }
         }
         return max;
+    }
+
+    public Robber getRobber() {
+        return robber;
+    }
+
+    public void setRobber(Robber robber) {
+        this.robber = robber;
     }
 
 }

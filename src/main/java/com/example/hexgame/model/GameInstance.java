@@ -19,6 +19,7 @@ public class GameInstance {
     private boolean initialIsPlacingRoad = false;
     private boolean isWaitingForPlayerRessourceChange = false;
     private boolean isWaitingForFreeRoadPlacement = false;
+    private boolean isWaitingForMovingRobber = false;
 
     private MostKnightsCard mostKnightsCard;
 
@@ -106,11 +107,11 @@ public class GameInstance {
         colors.add("green");
         colors.add("yellow");
         for (Player player : players.values()) {
-            //player.addRes(TileType.wood, 19);
-            //player.addRes(TileType.clay, 19);
-            //player.addRes(TileType.wheat, 19);
-            //player.addRes(TileType.wool, 19);
-            //player.addRes(TileType.stone, 19);
+            player.addRes(TileType.wood, 5);
+            player.addRes(TileType.clay, 5);
+            player.addRes(TileType.wheat, 5);
+            player.addRes(TileType.wool, 5);
+            player.addRes(TileType.stone, 5);
             int i = random.nextInt(colors.size());
             player.setColor(colors.get(i));
             colors.remove(i);
@@ -174,6 +175,7 @@ public class GameInstance {
         Node spot = board.getNodes()[row][col];
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         if (spot.getBuildFactor() > 1) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
@@ -211,6 +213,7 @@ public class GameInstance {
         if (board.getPaths().length <= row || board.getPaths()[row].length <= col ) return false;
         Path path = board.getPaths()[row][col];
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         if (path.getOwner() != null) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
@@ -219,6 +222,7 @@ public class GameInstance {
                 player.buildFreeRoad(true);
                 path.buildInitialRoad(player);
                 initialIsPlacingRoad = false;
+                sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 nextInitialBuild();
                 break;
             case IN_PROGRESS:
@@ -229,12 +233,12 @@ public class GameInstance {
                 else player.buildRoad();
                 isWaitingForFreeRoadPlacement = player.canBuildFreeRoad(false);
                 path.buildRoad(player);
+                sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
                 break;
             default:
                 return false;
         }
         this.board.checkLongestRoad();
-        sendMessage("BUILD_ROAD", playerId + " at " + row + ", " + col, "", player.getName());
         return true;
     }
 
@@ -242,6 +246,7 @@ public class GameInstance {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -259,6 +264,7 @@ public class GameInstance {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -266,8 +272,7 @@ public class GameInstance {
                 player.playDevelopmentCard(card);
                 switch (card.getType()) {
                     case knight:
-                        //TODO dont let player do stuff until finished moving knight + taking res
-                        //TODO same imp like 7
+                        this.isWaitingForMovingRobber = true;
                         this.mostKnightsCard.checkOwnerChange(player);
                         break;
                     case development:
@@ -327,6 +332,7 @@ public class GameInstance {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -382,6 +388,7 @@ public class GameInstance {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -403,6 +410,7 @@ public class GameInstance {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         Player player = players.get(playerId);
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
@@ -420,6 +428,7 @@ public class GameInstance {
         if (currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         Player player = players.get(playerId);
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
@@ -443,6 +452,7 @@ public class GameInstance {
         if (currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         Player player = players.get(playerId);
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
@@ -462,6 +472,7 @@ public class GameInstance {
         if (currentPlayer.getUserId().equals(partnerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         if (currentTradeOffer == null) return false;
         if (!currentTradeOffer.getAcceptersId().get(partnerId)) return false;
         Player player = players.get(playerId);
@@ -537,7 +548,7 @@ public class GameInstance {
         if (player.getResDebt() == 0) return false;
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
-                HashMap<TileType, Integer> tradeRes = new HashMap<TileType, Integer>();
+                HashMap<TileType, Integer> tradeRes = new HashMap();
                 tradeRes.put(TileType.wood, wood);
                 tradeRes.put(TileType.clay, clay);
                 tradeRes.put(TileType.wheat, wheat);
@@ -546,22 +557,34 @@ public class GameInstance {
 
                 int takenRessources = 0;
                 int givenRessources = 0;
+                System.out.println("a");
+
                 for (TileType res: tradeRes.keySet()) {
                     int playerGetsAmount = tradeRes.get(res);
                     if (playerGetsAmount > 0) {
                         if (!bank.hasRes(res, playerGetsAmount)) return false;
+                        System.out.println("ab");
                         takenRessources += playerGetsAmount;
                     } else if (playerGetsAmount < 0) {
                         int playerGivesAmount = -playerGetsAmount;
+                        System.out.println("ac");
                         if (!player.hasRes(res, playerGivesAmount)) return false;
+                        givenRessources += playerGivesAmount;
                     }
                 }
+                System.out.println("acd");
                 if (player.getResDebt() < 0) {
+                    System.out.println("acdbbbb");
                     if (givenRessources != 0) return false;
+                    System.out.println("acdbbbb");
                     if (-player.getResDebt() != takenRessources) return false;
+                    System.out.println("acdbbbb");
                 } else {
+                    System.out.println("acdaaa");
                     if (takenRessources != 0) return false;
+                    System.out.println("acdaaa");
                     if (player.getResDebt() != givenRessources) return false;
+                    System.out.println("acdaaa");
                 }
                 for (TileType res: tradeRes.keySet()) {
                     int amount = tradeRes.get(res);
@@ -570,7 +593,7 @@ public class GameInstance {
                         player.addToResDebt(amount);
                     } else if (amount < 0) {
                         player.takeRes(res, -amount);
-                        player.addToResDebt(-amount);
+                        player.addToResDebt(amount);
                     }
                 }
                 this.upDateWaitingForResDebt();
@@ -592,11 +615,48 @@ public class GameInstance {
         this.isWaitingForPlayerRessourceChange = false;
     }
 
+    public boolean moveRobber(String playerId, int oldRow, int oldCol, int row, int col) {
+        System.out.println("a");
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        System.out.println("ab");
+        Player player = players.get(playerId);
+        if (board.getTiles().length <= oldRow || board.getTiles()[oldRow].length <= oldCol ) return false;
+        System.out.println("aw");
+        if (board.getTiles().length <= row || board.getTiles()[row].length <= col ) return false;
+        System.out.println("ad");
+        Tile oldTile = board.getTiles()[oldRow][oldCol];
+        Tile tile = board.getTiles()[row][col];
+        if (isWaitingForFreeRoadPlacement) return false;
+        System.out.println("ah");
+        if (isWaitingForPlayerRessourceChange) return false;
+        System.out.println("aw");
+        if (!isWaitingForMovingRobber) return false;
+        System.out.println("ak");
+        if (!oldTile.hasRobber()) return false;
+        System.out.println("al");
+        if (tile.hasRobber()) return false;
+        System.out.println("aö");
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                boolean success = oldTile.moveRobber(tile);
+                if (!success) return false;
+                System.out.println("an");
+                this.isWaitingForMovingRobber = false;
+                //TODO handle ressource steal
+                sendMessage("MOVED_ROBBER", playerId + " to " + row + ", " + col, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
 
     public boolean endTurn(String playerId) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForMovingRobber) return false;
         this.currentTradeOffer = null;
         currentPlayer = currentPlayer.getNextPlayer();
         startTurn();
@@ -604,9 +664,21 @@ public class GameInstance {
         return true;       
     }
 
+    //TODO handle endturn -> phase before turn to play knigth -> start turn
+
     public void startTurn() {
         int[] d = throw2Dice();
         board.handleDice(d[0] + d[1]);
+        if (d[0] + d[1] == 7) {
+            this.isWaitingForMovingRobber = true;
+            for (Player player: players.values()) {
+                int numberCards = player.getTotalResBalance();
+                if (numberCards > 7) {
+                    player.addToResDebt(numberCards / 2);
+                    this.isWaitingForPlayerRessourceChange = true;
+                }
+            }
+        }
         sendMessage("START_TURN", "" + d[0] + "" + d[1], currentPlayer.getUserId(), currentPlayer.getName());            
     }
 
@@ -630,6 +702,12 @@ public class GameInstance {
 
     public TradeOffer getCurrentTradeOffer() {
         return currentTradeOffer;
+    }
+
+    
+
+    public boolean isWaitingForMovingRobber() {
+        return isWaitingForMovingRobber;
     }
 
     public String getId() { return id; }
