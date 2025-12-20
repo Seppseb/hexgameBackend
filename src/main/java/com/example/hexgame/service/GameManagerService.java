@@ -240,6 +240,19 @@ public class GameManagerService {
         }
     }
 
+    public boolean moveRobber(String gameId, String playerId, int oldRow, int oldCol, int row, int col) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.moveRobber(playerId, oldRow, oldCol, row, col);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
     public boolean endTurn(String gameId, String playerId) {
         if (gameId == null) return false;
         GameInstance gi = games.get(gameId);
