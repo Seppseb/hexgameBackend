@@ -109,11 +109,11 @@ public class GameInstance {
         colors.add("green");
         colors.add("yellow");
         for (Player player : players.values()) {
-            player.addRes(TileType.wood, 5);
-            player.addRes(TileType.clay, 5);
-            player.addRes(TileType.wheat, 5);
-            player.addRes(TileType.wool, 5);
-            player.addRes(TileType.stone, 5);
+            //player.addRes(TileType.wood, 5);
+            //player.addRes(TileType.clay, 5);
+            //player.addRes(TileType.wheat, 5);
+            //player.addRes(TileType.wool, 5);
+            //player.addRes(TileType.stone, 5);
             int i = random.nextInt(colors.size());
             player.setColor(colors.get(i));
             colors.remove(i);
@@ -559,34 +559,24 @@ public class GameInstance {
 
                 int takenRessources = 0;
                 int givenRessources = 0;
-                System.out.println("a");
 
                 for (TileType res: tradeRes.keySet()) {
                     int playerGetsAmount = tradeRes.get(res);
                     if (playerGetsAmount > 0) {
                         if (!bank.hasRes(res, playerGetsAmount)) return false;
-                        System.out.println("ab");
                         takenRessources += playerGetsAmount;
                     } else if (playerGetsAmount < 0) {
                         int playerGivesAmount = -playerGetsAmount;
-                        System.out.println("ac");
                         if (!player.hasRes(res, playerGivesAmount)) return false;
                         givenRessources += playerGivesAmount;
                     }
                 }
-                System.out.println("acd");
                 if (player.getResDebt() < 0) {
-                    System.out.println("acdbbbb");
                     if (givenRessources != 0) return false;
-                    System.out.println("acdbbbb");
                     if (-player.getResDebt() != takenRessources) return false;
-                    System.out.println("acdbbbb");
                 } else {
-                    System.out.println("acdaaa");
                     if (takenRessources != 0) return false;
-                    System.out.println("acdaaa");
                     if (player.getResDebt() != givenRessources) return false;
-                    System.out.println("acdaaa");
                 }
                 for (TileType res: tradeRes.keySet()) {
                     int amount = tradeRes.get(res);
