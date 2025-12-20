@@ -43,10 +43,6 @@ public class Tile implements Serializable {
         nodes[index] = node;
     }
 
-    @JsonIgnore
-    public Node getNode(int index) {
-        return nodes[index];
-    }
 
     public void handleDiceThrow() {
         if (this.hasRobber()) return;
@@ -72,6 +68,7 @@ public class Tile implements Serializable {
         if (!this.hasRobber()) return false;
         if (newTile.hasRobber()) return false;
         newTile.robber = this.robber;
+        this.robber.setLocation(newTile);
         this.robber = null;
         return true;
     }
@@ -82,6 +79,11 @@ public class Tile implements Serializable {
 
     public int getColIndex() {
         return colIndex;
+    }
+
+    @JsonIgnore
+    public Node[] getNodes() {
+        return nodes;
     }
 
     

@@ -367,8 +367,22 @@ public class Player {
         this.longestRoad = longestRoad;
     }
 
-    
-    
-
+    public void stealRandomRessource(Player profiteur) {
+        int totalRes = this.getTotalResBalance();
+        if (totalRes == 0) return;
+        // 0 - totalRes;
+        int resNumber = this.game.getRandom().nextInt(totalRes) + 1;
+        int limit = 0;
+        for (TileType type: resBalance.keySet()) {
+            limit+= resBalance.get(type);
+            if (resNumber <= limit) {
+                if (resBalance.get(type) < 1) throw new java.lang.Error("BUG: took ressource from player that doesnt exist");
+                this.takeRes(type, 1);
+                profiteur.addRes(type, 1);
+                return;
+            }
+        }
+        throw new java.lang.Error("BUG: cant steal from player");
+    }
 
 }

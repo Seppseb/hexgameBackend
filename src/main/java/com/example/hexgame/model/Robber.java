@@ -12,4 +12,8 @@ public class Robber {
         return location;
     }
 
+    public void setLocation(Tile newLocation) {
+        this.location = newLocation;
+    }
+
 }

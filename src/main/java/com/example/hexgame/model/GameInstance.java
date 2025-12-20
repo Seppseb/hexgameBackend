@@ -6,6 +6,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class GameInstance {
     private String id; // game id (UUID)
     private Board board;
@@ -36,7 +38,7 @@ public class GameInstance {
 
     private Random random;
 
-    private GameState state = GameState.WAITING_FOR_PLAYERS;
+    private GameState state = GameState.WAITING_FOR_PLAYERS; //TODO -> add "minor" gamestate to handle: "Dicethrow", "moveRobber", "payDebts", "buildRoad", "selectVictim", ...
     private Instant lastActive = Instant.now();
 
     // Lock for per-game concurrency
@@ -548,7 +550,7 @@ public class GameInstance {
         if (player.getResDebt() == 0) return false;
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
-                HashMap<TileType, Integer> tradeRes = new HashMap();
+                HashMap<TileType, Integer> tradeRes = new HashMap<>();
                 tradeRes.put(TileType.wood, wood);
                 tradeRes.put(TileType.clay, clay);
                 tradeRes.put(TileType.wheat, wheat);
@@ -616,33 +618,41 @@ public class GameInstance {
     }
 
     public boolean moveRobber(String playerId, int oldRow, int oldCol, int row, int col) {
-        System.out.println("a");
         if (!currentPlayer.getUserId().equals(playerId)) return false;
-        System.out.println("ab");
         Player player = players.get(playerId);
         if (board.getTiles().length <= oldRow || board.getTiles()[oldRow].length <= oldCol ) return false;
-        System.out.println("aw");
         if (board.getTiles().length <= row || board.getTiles()[row].length <= col ) return false;
-        System.out.println("ad");
         Tile oldTile = board.getTiles()[oldRow][oldCol];
         Tile tile = board.getTiles()[row][col];
         if (isWaitingForFreeRoadPlacement) return false;
-        System.out.println("ah");
         if (isWaitingForPlayerRessourceChange) return false;
-        System.out.println("aw");
         if (!isWaitingForMovingRobber) return false;
-        System.out.println("ak");
         if (!oldTile.hasRobber()) return false;
-        System.out.println("al");
         if (tile.hasRobber()) return false;
-        System.out.println("aö");
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
                 boolean success = oldTile.moveRobber(tile);
                 if (!success) return false;
-                System.out.println("an");
                 this.isWaitingForMovingRobber = false;
-                //TODO handle ressource steal
+                HashSet<Player> victims = new HashSet<>();
+                for (Node node: tile.getNodes()) {
+                    if (node != null) {
+                        Player victim = node.getOwner();
+                        if (victim != null && victim != player && victim.getTotalResBalance() > 0) {
+                            victims.add(victim);
+                        }
+                    } 
+                }
+                if (victims.size() == 0) {
+                    //cant steal anything
+                } else if (victims.size() == 1) {
+                    for (Player victim: victims) {
+                        victim.stealRandomRessource(player);
+                        break;
+                    }
+                } else {
+                    //TODO let player choose in frontend -> send victim
+                }
                 sendMessage("MOVED_ROBBER", playerId + " to " + row + ", " + col, "", player.getName());
                 break;
             default:
@@ -724,6 +734,13 @@ public class GameInstance {
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
     }
+
+    @JsonIgnore
+    public Random getRandom() {
+        return random;
+    }
+
+    
 
     
 }
