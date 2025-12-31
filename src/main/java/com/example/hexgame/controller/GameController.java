@@ -634,6 +634,41 @@ public class GameController {
                 "message", "moved robber"
         ));
     }
+
+    @PostMapping("/{gameId}/chooseVictim/{victimId}")
+    public ResponseEntity<?> chooseVictim(@PathVariable String gameId,
+                                    @PathVariable String victimId,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.chooseVictim(gameId, userId, victimId);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "moving robber failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "moved robber"
+        ));
+    }
     
 
     @PostMapping("/{gameId}/endTurn")

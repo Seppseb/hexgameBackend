@@ -22,6 +22,9 @@ public class GameInstance {
     private boolean isWaitingForPlayerRessourceChange = false;
     private boolean isWaitingForFreeRoadPlacement = false;
     private boolean isWaitingForMovingRobber = false;
+    private boolean isWaitingForChoosingVictim = false;
+    private Set<Player> possibleVictims;
+
 
     private MostKnightsCard mostKnightsCard;
 
@@ -51,6 +54,7 @@ public class GameInstance {
         this.bank = new Bank(this.random);
         this.messagingTemplate = messagingTemplate;
         this.mostKnightsCard = new MostKnightsCard();
+        this.possibleVictims = new HashSet<>();
     }
 
     public int[] throw2Dice() {
@@ -178,6 +182,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         if (spot.getBuildFactor() > 1) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
@@ -216,6 +221,7 @@ public class GameInstance {
         Path path = board.getPaths()[row][col];
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         if (path.getOwner() != null) return false;
         if (null == state) return false; else switch (state) {
             case PLACEMENT:
@@ -249,6 +255,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -267,6 +274,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -335,6 +343,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -391,6 +400,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
@@ -413,6 +423,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
@@ -431,6 +442,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
@@ -455,6 +467,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
@@ -475,6 +488,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         if (currentTradeOffer == null) return false;
         if (!currentTradeOffer.getAcceptersId().get(partnerId)) return false;
         Player player = players.get(playerId);
@@ -616,6 +630,7 @@ public class GameInstance {
         Tile tile = board.getTiles()[row][col];
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
+        if (isWaitingForChoosingVictim) return false;
         if (!isWaitingForMovingRobber) return false;
         if (!oldTile.hasRobber()) return false;
         if (tile.hasRobber()) return false;
@@ -641,9 +656,34 @@ public class GameInstance {
                         break;
                     }
                 } else {
-                    //TODO let player choose in frontend -> send victim
+                    isWaitingForChoosingVictim = true;
+                    this.possibleVictims = victims;
                 }
                 sendMessage("MOVED_ROBBER", playerId + " to " + row + ", " + col, "", player.getName());
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    public boolean chooseVictim(String playerId, String victimId) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        Player player = players.get(playerId);
+        if (isWaitingForFreeRoadPlacement) return false;
+        if (isWaitingForPlayerRessourceChange) return false;
+        if (!isWaitingForChoosingVictim) return false;
+        if (isWaitingForMovingRobber) return false;
+        if (null == state) return false; else switch (state) {
+            case IN_PROGRESS:
+                isWaitingForChoosingVictim = true;
+                Player victim = players.get(victimId);
+                if (victim == null) return false;
+                if (!possibleVictims.contains(victim)) return false;
+                victim.stealRandomRessource(player);
+                possibleVictims.clear();
+                isWaitingForChoosingVictim = false;
+                sendMessage("CHOOSEN_VICTIM", playerId + " choose " + victimId, "", player.getName());
                 break;
             default:
                 return false;
@@ -657,6 +697,7 @@ public class GameInstance {
         if (isWaitingForFreeRoadPlacement) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
+        if (isWaitingForChoosingVictim) return false;
         this.currentTradeOffer = null;
         currentPlayer = currentPlayer.getNextPlayer();
         startTurn();
@@ -710,6 +751,11 @@ public class GameInstance {
         return isWaitingForMovingRobber;
     }
 
+    public boolean isWaitingForChoosingVictim() {
+        return isWaitingForChoosingVictim;
+    }
+
+
     public String getId() { return id; }
     public Board getBoard() { return board; }
     public Map<String, Player> getPlayers() { return players; }
@@ -728,6 +774,10 @@ public class GameInstance {
     @JsonIgnore
     public Random getRandom() {
         return random;
+    }
+
+    public Set<Player> getPossibleVictims() {
+        return possibleVictims;
     }
 
     

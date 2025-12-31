@@ -253,6 +253,19 @@ public class GameManagerService {
         }
     }
 
+    public boolean chooseVictim(String gameId, String playerId, String victimId) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.chooseVictim(playerId, victimId);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
     public boolean endTurn(String gameId, String playerId) {
         if (gameId == null) return false;
         GameInstance gi = games.get(gameId);
