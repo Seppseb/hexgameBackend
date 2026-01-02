@@ -47,10 +47,18 @@ public class GameInstance {
     // Lock for per-game concurrency
     private final transient ReentrantLock lock = new ReentrantLock();
 
-    public GameInstance(String id, SimpMessagingTemplate messagingTemplate) {
+    public GameInstance(String id, SimpMessagingTemplate messagingTemplate, boolean fairNumbers) {
         this.random = new Random();
         this.id = id;
         this.board = new Board(this.random);
+        if (fairNumbers) {
+            for (int i = 0; i < 200; i++) {
+                Board newBoard = new Board(this.random);
+                if (newBoard.getNumberUnFairnessScore() < this.board.getNumberUnFairnessScore()) {
+                    this.board = newBoard;
+                }
+            }
+        }
         this.bank = new Bank(this.random);
         this.messagingTemplate = messagingTemplate;
         this.mostKnightsCard = new MostKnightsCard();

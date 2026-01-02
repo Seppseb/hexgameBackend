@@ -27,7 +27,13 @@ public class GameController {
 
     @PostMapping("/create")
     public ResponseEntity<GameInstance> createGame(@RequestBody(required = false) CreateGameRequest req) {
-        GameInstance g = manager.createGame();
+        GameInstance g = manager.createGame(false);
+        return ResponseEntity.ok(g);
+    }
+
+    @PostMapping("/create/fairNumbers")
+    public ResponseEntity<GameInstance> createGameFairNumbers(@RequestBody(required = false) CreateGameRequest req) {
+        GameInstance g = manager.createGame(true);
         return ResponseEntity.ok(g);
     }
 
