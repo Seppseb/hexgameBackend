@@ -1,11 +1,9 @@
 package com.example.hexgame.controller;
 
-import com.example.hexgame.dto.CreateGameRequest;
-import com.example.hexgame.dto.JoinResponse;
+import com.example.hexgame.dto.GameInfoDTO;
 import com.example.hexgame.model.GameInstance;
 import com.example.hexgame.service.GameManagerService;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.http.ResponseEntity;
@@ -26,7 +24,7 @@ public class GameController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<GameInstance> createGame(@RequestBody(required = false) CreateGameRequest req) {
+    public ResponseEntity<GameInstance> createGame() {
         GameInstance g = manager.createGame();
         return ResponseEntity.ok(g);
     }
@@ -115,11 +113,21 @@ public class GameController {
         return ResponseEntity.ok(userId + ";" + userName);
     }
 
-    // Add endpoints to get game state, make moves, etc.
-    @GetMapping("/{gameId}")
-    public ResponseEntity<?> getGame(@PathVariable String gameId) {
+    @GetMapping("/info/{gameId}")
+    public ResponseEntity<?> getGameInfo(@PathVariable String gameId) {
         return manager.getGame(gameId)
-                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .map(game -> ResponseEntity.ok(game.toInfoDTO()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{gameId}")
+    public ResponseEntity<?> getGame(
+            @PathVariable String gameId,
+            @CookieValue(value = "userId", required = false) String userId,
+            HttpServletResponse response) {
+
+        return manager.getGame(gameId)
+                .map(game -> ResponseEntity.ok(game.toDTO(userId)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 

@@ -3,9 +3,14 @@ package com.example.hexgame.model;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import com.example.hexgame.dto.GameDTO;
+import com.example.hexgame.dto.GameInfoDTO;
+import com.example.hexgame.dto.PlayerDTO;
+import com.example.hexgame.dto.PlayerInfoDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class GameInstance {
@@ -30,10 +35,6 @@ public class GameInstance {
     //TODO can be changed in future; not tested yet
     private boolean canTradeMultipleRessourcesAtOnce = false;
 
-    public boolean isInitialIsPlacingRoad() {
-        return initialIsPlacingRoad;
-    }
-
     private final SimpMessagingTemplate messagingTemplate;
 
     private Random random;
@@ -57,10 +58,6 @@ public class GameInstance {
         int die1 = random.nextInt(6) + 1;
         int die2 = random.nextInt(6) + 1;
         return new int[]{die1, die2};
-    }
-
-    public ReentrantLock getLock() {
-        return lock;
     }
 
     public boolean isGameOwner(String userId) {
@@ -154,7 +151,7 @@ public class GameInstance {
         System.out.println(type + " for: " + ("".equals(targetPlayerId) ? "all" : targetPlayerId) + ": " + message);
         messagingTemplate.convertAndSend(
             "/topic/games/" + id,
-            Map.of("type", type, "message", message, "playerId", targetPlayerId, "game", this, "playerName", causer)
+            Map.of("type", type, "message", message, "playerId", targetPlayerId, "game", this.toInfoDTO(), "playerName", causer)
         );
     }
 
@@ -682,32 +679,16 @@ public class GameInstance {
         sendMessage("START_TURN", "" + d[0] + "" + d[1], currentPlayer.getUserId(), currentPlayer.getName());            
     }
 
-    
-
     public Bank getBank() {
         return bank;
-    }
-
-    public void setBank(Bank bank) {
-        this.bank = bank;
     }
 
     public Player getCurrentPlayer() {
         return currentPlayer;
     }
 
-    public void setCurrentPlayer(Player currentPlayer) {
-        this.currentPlayer = currentPlayer;
-    }
-
     public TradeOffer getCurrentTradeOffer() {
         return currentTradeOffer;
-    }
-
-    
-
-    public boolean isWaitingForMovingRobber() {
-        return isWaitingForMovingRobber;
     }
 
     public String getId() { return id; }
@@ -715,14 +696,22 @@ public class GameInstance {
     public Map<String, Player> getPlayers() { return players; }
     public GameState getState() { return state; }
     public Instant getLastActive() { return lastActive; }
-    public void touch() { this.lastActive = Instant.now(); }
-
 
     public String getOwnerId() {
         return ownerId;
     }
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
+
+    public boolean getIsWaitingForMovingRobber() {
+        return isWaitingForMovingRobber;
+    }
+
+    public boolean getIsInitialIsPlacingRoad() {
+        return initialIsPlacingRoad;
+    }
+
+    @JsonIgnore
+    public ReentrantLock getLock() {
+        return lock;
     }
 
     @JsonIgnore
@@ -730,7 +719,65 @@ public class GameInstance {
         return random;
     }
 
+    public GameInfoDTO toInfoDTO() {
+        GameInfoDTO dto = new GameInfoDTO();
+    
+        dto.id = getId();
+        dto.state = getState();
+        dto.lastActive = getLastActive();
+        dto.ownerId = getOwnerId();
+    
+        dto.players = players.values().stream()
+        .collect(Collectors.toMap(
+            Player::getUserId,
+            PlayerInfoDTO::new
+        ));
+    
+        return dto;
+    }
+
+    public GameDTO toDTO(String playerId) {
+        Player you = players.get(playerId);
+        if (you == null) return null;
+
+        GameDTO dto = new GameDTO();
+
+        dto.id = getId();
+        dto.state = getState();
+        dto.lastActive = getLastActive();
+        dto.ownerId = getOwnerId();
+
+        dto.board = getBoard();
+        dto.bank = getBank();
+        dto.players = players.values().stream()
+        .collect(Collectors.toMap(
+            Player::getUserId,
+            PlayerInfoDTO::new
+        ));
+        dto.currentPlayer = new PlayerInfoDTO(getCurrentPlayer());
+
+        dto.currentTradeOffer = getCurrentTradeOffer();
+        dto.isWaitingForMovingRobber = getIsWaitingForMovingRobber();
+        dto.isInitialIsPlacingRoad = getIsInitialIsPlacingRoad();
+
+        dto.you = new PlayerDTO(you);
+    
+        return dto;
+    }
     
 
+    public void touch() { this.lastActive = Instant.now(); }
+
+    public void setCurrentPlayer(Player currentPlayer) {
+        this.currentPlayer = currentPlayer;
+    }
+
+    public void setBank(Bank bank) {
+        this.bank = bank;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+    }
     
 }

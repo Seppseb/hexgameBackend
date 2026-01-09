@@ -25,8 +25,6 @@ public class Player {
 
     private int playedKnights;
 
-    private int longestRoad;
-
     private ArrayDeque<DevelopmentItem> developments;
     private ArrayDeque<DevelopmentItem> usedDevelopments;
 
@@ -38,21 +36,16 @@ public class Player {
     //TODO make variable, also other stuff like road amount and other things
     private int pointsToWin = 10;
 
-    @JsonIgnore
-    public Player getNextPlayer() {
-        return nextPlayer;
-    }
     public void setNextPlayer(Player nextPlayer) {
         this.nextPlayer = nextPlayer;
     }
 
-    public int getPlayerIndex() {
-        return playerIndex;
-    }
+    
     public void setPlayerIndex(int playerIndex) {
         this.playerIndex = playerIndex;
     }
-    // constructors, getters, setters
+
+
     public Player(String userId, String name, Bank bank, GameInstance gameInstance) {
         this.userId = userId;
         this.name = name;
@@ -93,26 +86,124 @@ public class Player {
         resBalance.put(TileType.wool, 0);
         resBalance.put(TileType.stone, 0);
     }
-    // getters/setters...
+
+    @JsonIgnore
+    public Player getNextPlayer() {
+        return nextPlayer;
+    }
+    
+    public int getPlayerIndex() {
+        return playerIndex;
+    }
+
     public String getUserId() {
         return userId;
     }
+
     public String getName() {
         return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public String toString() {
-        return name;      
     }
 
     public String getColor() {
         return color;
     }
 
+    //private
+    public HashMap<TileType, Integer> getResBalance() {
+        return resBalance;
+    }
+
+    public int getTotalResBalance() {
+        int total = 0;
+        for (int amount: this.resBalance.values()) {
+            total += amount;
+        }
+        return total;
+    }
+
+    public HashMap<TileType, Integer> getTradeFactor() {
+        return tradeFactor;
+    }
+
+    public int getTradeFactor(TileType res) {
+        return tradeFactor.get(res);
+    }
+
+    public int getRoadNumber() {
+        return roads.size();
+    }
+
+    public int getVillageNumber() {
+        return villages.size();
+    }
+
+    public int getCityNumber() {
+        return cities.size();
+    }
+
+    //private
+    public ArrayDeque<DevelopmentItem> getDevelopments() {
+        return developments;
+    }
+
+    public int getNumberDevelopments() {
+        return developments == null ? 0 : developments.size();
+    }
+
+    public ArrayDeque<DevelopmentItem> getUsedDevelopments() {
+        return usedDevelopments;
+    }
+
+    public int getPlayedKnights() {
+        return playedKnights;
+    }
+
+    public int getVictoryPoints() {
+        return victoryPoints;
+    }
+
+    public int getResDebt() {
+        return resDebt;
+    }
+
+    public DevelopmentItem getDevelopmentCard(String type) {
+        DevelopmentType cardType;
+        switch (type) {
+            case "knight":
+                cardType = DevelopmentType.knight;
+                break;
+            case "development":
+                cardType = DevelopmentType.development;
+                break;
+            case "roadwork":
+                cardType = DevelopmentType.roadwork;
+                break;
+            case "monopoly":
+                cardType = DevelopmentType.monopoly;
+                break;
+            case "victoryPoint":
+                cardType = DevelopmentType.victoryPoint;
+                break;
+            default:
+                return null;
+        }
+
+        for (DevelopmentItem card: developments) {
+            if (card.getType() == cardType) return card;
+        }
+
+        return null;
+    }
+
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String toString() {
+        return name;      
     }
 
     public boolean hasRes(TileType type, int amount) {
@@ -220,27 +311,6 @@ public class Player {
         return true;
     }
 
-
-    public HashMap<TileType, Integer> getResBalance() {
-        return resBalance;
-    }
-
-    public int getTotalResBalance() {
-        int total = 0;
-        for (int amount: this.resBalance.values()) {
-            total += amount;
-        }
-        return total;
-    }
-
-    public HashMap<TileType, Integer> getTradeFactor() {
-        return tradeFactor;
-    }
-
-    public int getTradeFactor(TileType res) {
-        return tradeFactor.get(res);
-    }
-
     public void buildPort(TileType res) {
         if (res != null) {
             switch (res) {
@@ -278,71 +348,14 @@ public class Player {
         }
     }
 
-    public int getRoadNumber() {
-        return roads.size();
-    }
-
-    public int getVillageNumber() {
-        return villages.size();
-    }
-
-    public int getCityNumber() {
-        return cities.size();
-    }
-
-    public ArrayDeque<DevelopmentItem> getDevelopments() {
-        return developments;
-    }
-
-    public ArrayDeque<DevelopmentItem> getUsedDevelopments() {
-        return usedDevelopments;
-    }
-
-    public DevelopmentItem getDevelopmentCard(String type) {
-        DevelopmentType cardType;
-        switch (type) {
-            case "knight":
-                cardType = DevelopmentType.knight;
-                break;
-            case "development":
-                cardType = DevelopmentType.development;
-                break;
-            case "roadwork":
-                cardType = DevelopmentType.roadwork;
-                break;
-            case "monopoly":
-                cardType = DevelopmentType.monopoly;
-                break;
-            case "victoryPoint":
-                cardType = DevelopmentType.victoryPoint;
-                break;
-            default:
-                return null;
-        }
-
-        for (DevelopmentItem card: developments) {
-            if (card.getType() == cardType) return card;
-        }
-
-        return null;
-    }
-
     public void playDevelopmentCard(DevelopmentItem card) {
         developments.remove(card);
         usedDevelopments.add(card);
         if (card.getType() == DevelopmentType.knight) playedKnights++;
     }
-    
-    public int getVictoryPoints() {
-        return victoryPoints;
-    }
 
     public void addToResDebt(int amount) {
         this.resDebt+= amount;
-    }
-
-    public int getResDebt() {
-        return resDebt;
     }
 
     public void addFreeRoads(int amount) {
@@ -351,20 +364,6 @@ public class Player {
             amount = roadsLeft;
         }
         this.freeRoads+= amount;
-    }
-
-    public int getPlayedKnights() {
-        return playedKnights;
-    }
-
-
-    public int getLongestRoad() {
-        return longestRoad;
-    }
-
-    
-    public void setLongestRoad(int longestRoad) {
-        this.longestRoad = longestRoad;
     }
 
     public void stealRandomRessource(Player profiteur) {

@@ -438,10 +438,6 @@ public class Board implements Serializable {
             }
         }
 
-        for (Player player: newLongestRoad.keySet()) {
-            player.setLongestRoad(newLongestRoad.get(player));
-        }
-
         this.longestRoadCard.checkOwnerChange(newLongestRoad, max);
     }
 
