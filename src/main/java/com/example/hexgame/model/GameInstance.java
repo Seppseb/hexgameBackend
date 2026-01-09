@@ -750,20 +750,20 @@ public class GameInstance {
         return ownerId;
     }
 
-    public Set<Player> getPossibleVictims() {
-        return possibleVictims;
-    }
-
     public boolean getIsWaitingForMovingRobber() {
         return isWaitingForMovingRobber;
+    }
+
+    public boolean getIsInitialIsPlacingRoad() {
+        return initialIsPlacingRoad;
     }
 
     public boolean getIsWaitingForChoosingVictim() {
         return isWaitingForChoosingVictim;
     }
 
-    public boolean getIsInitialIsPlacingRoad() {
-        return initialIsPlacingRoad;
+    public Set<Player> getPossibleVictims() {
+        return possibleVictims;
     }
 
     @JsonIgnore
@@ -806,7 +806,7 @@ public class GameInstance {
 
         dto.board = getBoard();
         dto.bank = getBank();
-        dto.players = players.values().stream()
+        dto.players = getPlayers().values().stream()
         .collect(Collectors.toMap(
             Player::getUserId,
             PlayerInfoDTO::new
@@ -816,6 +816,10 @@ public class GameInstance {
         dto.currentTradeOffer = getCurrentTradeOffer();
         dto.isWaitingForMovingRobber = getIsWaitingForMovingRobber();
         dto.isInitialIsPlacingRoad = getIsInitialIsPlacingRoad();
+        dto.isWaitingForChoosingVictim = getIsWaitingForChoosingVictim();
+        dto.possibleVictims = getPossibleVictims().stream()
+        .map(PlayerInfoDTO::new)   // or player -> new PlayerInfoDTO(player)
+        .collect(Collectors.toSet());
 
         dto.you = new PlayerDTO(you);
     

@@ -2,6 +2,7 @@ package com.example.hexgame.dto;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 
 import com.example.hexgame.model.Bank;
 import com.example.hexgame.model.Board;
@@ -22,6 +23,8 @@ public class GameDTO {
     public TradeOffer currentTradeOffer;
     public boolean isWaitingForMovingRobber;
     public boolean isInitialIsPlacingRoad;
+    public boolean isWaitingForChoosingVictim;
+    public Set<PlayerInfoDTO> possibleVictims;
 
     public PlayerDTO you;
 }
