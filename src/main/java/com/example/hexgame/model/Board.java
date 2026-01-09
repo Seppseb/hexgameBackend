@@ -11,7 +11,7 @@ import java.util.Random;
 // Keep board serializable for JSON transport. Add fields you need.
 public class Board implements Serializable {
 
-    private Random random;
+    private final Random random;
 
     private int wood = 4;
     private int clay = 3;
@@ -31,7 +31,7 @@ public class Board implements Serializable {
 
     //TODO make variable
 
-    private int[] numbers = new int[] {0, 0, 1, 2, 2, 2, 2, 0, 2, 2, 2, 2, 1};
+    private final int[] numbers = new int[] {0, 0, 1, 2, 2, 2, 2, 0, 2, 2, 2, 2, 1};
     int[] tilesPerRow = new int[]{3, 4, 5, 4, 3};
     int[] nodesPerRow = new int[] {3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3};
     int[] pathsPerRow = new int[] {6, 4, 8, 5, 10, 6, 10, 5, 8, 4, 6};
@@ -44,6 +44,8 @@ public class Board implements Serializable {
 
     private LongestRoadCard longestRoadCard;
     private Robber robber;
+
+    private double numberUnFairnessScore = 0;
 
     public Board(Random random) {
         this.random = random;
@@ -59,11 +61,12 @@ public class Board implements Serializable {
     private void generateTiles() {
         tiles = new Tile[tilesPerRow.length][];
         tilesWithNumber = new HashMap<>();
+        int[] avaliableNumbers = this.numbers.clone();
         for (int i = 0; i < tilesPerRow.length; i++) {
             Tile[] row = new Tile[tilesPerRow[i]];
             for (int k = 0; k < row.length; k++) {
                 TileType type = drawType();
-                int number = type == TileType.desert ? 0 : drawNumber();
+                int number = type == TileType.desert ? 0 : drawNumber(avaliableNumbers);
                 Tile tile = new Tile(type, number, this, i, k);
                 if (!tilesWithNumber.containsKey(number)) tilesWithNumber.put(number, new ArrayList<Tile>());
                 tilesWithNumber.get(number).add(tile);
@@ -321,20 +324,20 @@ public class Board implements Serializable {
         return TileType.desert;
     }
 
-    private int drawNumber() {
+    private int drawNumber(int[] avaliableNumbers) {
         int total = 0;
-        for (int i = 0; i < numbers.length; i++) {
-            total += numbers[i];
+        for (int i = 0; i < avaliableNumbers.length; i++) {
+            total += avaliableNumbers[i];
         }
         if (total < 1) throw new java.lang.Error("BUG: no numbers left idiot config");
         // 0 - total;
         int randomNumber = random.nextInt(total) + 1;
         int limit = 0;
-        for (int i = 0; i < numbers.length; i++) {
-            limit += numbers[i];
+        for (int i = 0; i < avaliableNumbers.length; i++) {
+            limit += avaliableNumbers[i];
             if (randomNumber <= limit) {
-                if (numbers[i] < 1) throw new java.lang.Error("BUG: took number that doesnt exist");
-                numbers[i]--;
+                if (avaliableNumbers[i] < 1) throw new java.lang.Error("BUG: took number that doesnt exist");
+                avaliableNumbers[i]--;
                 return i;
             }
         }
@@ -468,6 +471,37 @@ public class Board implements Serializable {
 
     public void setRobber(Robber robber) {
         this.robber = robber;
+    }
+
+    public double getNumberUnFairnessScore() {
+        if (this.numberUnFairnessScore != 0) return this.numberUnFairnessScore;
+
+        double score = 0;
+        for (int i = 0; i < nodes.length; i++) {
+            Node[] row = nodes[i];
+            for (int k = 0; k < row.length; k++) {
+                Node node = row[k];
+                double totalProb = 0;
+                for (int n = 0; n < 3; n++) {
+                    Tile tile = node.getTile(n);
+                    if (tile == null || tile.getType() == TileType.desert) {
+                        continue;
+                    }
+                    totalProb += diceProbability(tile.getNumber());
+                }
+                score += Math.pow(totalProb, 4);
+            }
+        }
+        this.numberUnFairnessScore = score;
+        return this.numberUnFairnessScore;
+    }
+
+    private int diceProbability(int n) {
+        if (n > 12 || n < 2) return 0;
+        if (n > 7) {
+            n-= 2 * (n-7);
+        }
+        return n-1;
     }
 
 }

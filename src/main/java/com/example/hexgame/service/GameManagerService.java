@@ -24,9 +24,9 @@ public class GameManagerService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public GameInstance createGame() {
+    public GameInstance createGame(boolean fairNumbers) {
         String id = UUID.randomUUID().toString();
-        GameInstance g = new GameInstance(id, messagingTemplate);
+        GameInstance g = new GameInstance(id, messagingTemplate, fairNumbers);
         games.put(id, g);
         return g;
     }
@@ -248,6 +248,19 @@ public class GameManagerService {
         try {
             if (!gi.getPlayers().containsKey(playerId)) return false;
             return gi.moveRobber(playerId, oldRow, oldCol, row, col);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean chooseVictim(String gameId, String playerId, String victimId) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.chooseVictim(playerId, victimId);
         } finally {
             gi.getLock().unlock();
         }
