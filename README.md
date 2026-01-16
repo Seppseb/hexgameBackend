@@ -1,7 +1,8 @@
 # hexgameBackend
 
 TODOS:
-make board modular, let user decide size
+make board modular, let user decide size?
+dont allow same name for 2 users?
 
 
 # local setup:
