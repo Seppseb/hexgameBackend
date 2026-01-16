@@ -1,5 +1,6 @@
 com\example\hexgame\model\Player.class
 com\example\hexgame\model\MostKnightsCard.class
+com\example\hexgame\dto\BankDTO.class
 com\example\hexgame\model\CityItem.class
 com\example\hexgame\config\WebSocketConfig.class
 com\example\hexgame\model\Port.class

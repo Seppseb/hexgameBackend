@@ -1,6 +1,5 @@
 package com.example.hexgame.controller;
 
-import com.example.hexgame.dto.GameInfoDTO;
 import com.example.hexgame.model.GameInstance;
 import com.example.hexgame.service.GameManagerService;
 
@@ -24,14 +23,11 @@ public class GameController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<GameInstance> createGame() {
-        GameInstance g = manager.createGame(false);
-        return ResponseEntity.ok(g);
-    }
-
-    @PostMapping("/create/fairNumbers")
-    public ResponseEntity<GameInstance> createGameFairNumbers() {
-        GameInstance g = manager.createGame(true);
+    public ResponseEntity<GameInstance> createGame(@RequestBody boolean[] config) {
+        if (config == null || config.length < 2) {
+            return ResponseEntity.badRequest().build();
+        }
+        GameInstance g = manager.createGame(config);
         return ResponseEntity.ok(g);
     }
 

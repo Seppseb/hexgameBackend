@@ -24,9 +24,9 @@ public class GameManagerService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public GameInstance createGame(boolean fairNumbers) {
+    public GameInstance createGame(boolean[] config) {
         String id = UUID.randomUUID().toString();
-        GameInstance g = new GameInstance(id, messagingTemplate, fairNumbers);
+        GameInstance g = new GameInstance(id, messagingTemplate, config);
         games.put(id, g);
         return g;
     }

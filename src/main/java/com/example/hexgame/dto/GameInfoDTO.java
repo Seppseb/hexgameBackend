@@ -12,5 +12,7 @@ public class GameInfoDTO {
     public Instant lastActive;
     public String ownerId;
 
+    public PlayerInfoDTO winner;
+
     public Map<String, PlayerInfoDTO> players;
 }

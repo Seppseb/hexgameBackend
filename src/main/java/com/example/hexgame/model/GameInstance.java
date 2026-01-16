@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import com.example.hexgame.dto.BankDTO;
 import com.example.hexgame.dto.GameDTO;
 import com.example.hexgame.dto.GameInfoDTO;
 import com.example.hexgame.dto.PlayerDTO;
@@ -30,6 +31,11 @@ public class GameInstance {
     private boolean isWaitingForChoosingVictim = false;
     private Set<Player> possibleVictims;
 
+    private Player winner = null;
+
+    private int[] singleDieStats;
+    private int[] doubleDieStats;
+
 
     private MostKnightsCard mostKnightsCard;
 
@@ -48,10 +54,12 @@ public class GameInstance {
     // Lock for per-game concurrency
     private final transient ReentrantLock lock = new ReentrantLock();
 
-    public GameInstance(String id, SimpMessagingTemplate messagingTemplate, boolean fairNumbers) {
+    public GameInstance(String id, SimpMessagingTemplate messagingTemplate, boolean[] config) {
         this.random = new Random();
         this.id = id;
         this.board = new Board(this.random);
+        boolean fairNumbers = config != null && config.length > 0 ? config[0] : false;
+        boolean showBank = config != null && config.length > 1 ? config[1] : false;
         if (fairNumbers) {
             for (int i = 0; i < 200; i++) {
                 Board newBoard = new Board(this.random);
@@ -60,15 +68,25 @@ public class GameInstance {
                 }
             }
         }
-        this.bank = new Bank(this.random);
+        this.bank = new Bank(this.random, showBank);
         this.messagingTemplate = messagingTemplate;
         this.mostKnightsCard = new MostKnightsCard();
         this.possibleVictims = new HashSet<>();
+
+        this.singleDieStats = new int[7];
+        this.doubleDieStats = new int[13];
     }
 
-    public int[] throw2Dice() {
+    public int[] throw2Dice(boolean addToStats) {
         int die1 = random.nextInt(6) + 1;
         int die2 = random.nextInt(6) + 1;
+
+        if (addToStats) {
+            this.singleDieStats[die1]++;
+            this.singleDieStats[die2]++;
+            this.doubleDieStats[die1 + die2]++;
+        }
+
         return new int[]{die1, die2};
     }
 
@@ -118,11 +136,11 @@ public class GameInstance {
         colors.add("green");
         colors.add("yellow");
         for (Player player : players.values()) {
-            //player.addRes(TileType.wood, 5);
-            //player.addRes(TileType.clay, 5);
-            //player.addRes(TileType.wheat, 5);
-            //player.addRes(TileType.wool, 5);
-            //player.addRes(TileType.stone, 5);
+            player.addRes(TileType.wood, 5);
+            player.addRes(TileType.clay, 5);
+            player.addRes(TileType.wheat, 5);
+            player.addRes(TileType.wool, 5);
+            player.addRes(TileType.stone, 5);
             int i = random.nextInt(colors.size());
             player.setColor(colors.get(i));
             colors.remove(i);
@@ -138,10 +156,10 @@ public class GameInstance {
         TreeMap<Integer, Player> playerOrder = new TreeMap<>();
         for (Player player : players.values()) {
             needReady.add(player.getUserId());
-            int[] d = throw2Dice();
+            int[] d = throw2Dice(false);
             for (int i = 0; i < 20; i++) {
                 if (!playerOrder.containsKey(d[0] + d[1])) break;
-                d = throw2Dice();
+                d = throw2Dice(false);
             }
             playerOrder.put(d[0] + d[1], player);
             sendMessage("INITIAL_ROLL", "" + d[0] + "" + d[1], player.getUserId(), player.getName());            
@@ -339,7 +357,8 @@ public class GameInstance {
     }
 
     public void sendWin(Player player) {
-        //TODO handle in frontend
+        if (this.winner != null) return;
+        this.winner = player;
         sendMessage("WON", player.getUserId(), "", player.getName());
     }
 
@@ -713,7 +732,7 @@ public class GameInstance {
     //TODO handle endturn -> phase before turn to play knigth -> start turn
 
     public void startTurn() {
-        int[] d = throw2Dice();
+        int[] d = throw2Dice(true);
         board.handleDice(d[0] + d[1]);
         if (d[0] + d[1] == 7) {
             this.isWaitingForMovingRobber = true;
@@ -766,6 +785,18 @@ public class GameInstance {
         return possibleVictims;
     }
 
+    public int[] getSingleDieStats() {
+        return singleDieStats;
+    }
+
+    public int[] getDoubleDieStats() {
+        return doubleDieStats;
+    }
+
+    public Player getWinner() {
+        return winner;
+    }
+
     @JsonIgnore
     public ReentrantLock getLock() {
         return lock;
@@ -789,6 +820,8 @@ public class GameInstance {
             Player::getUserId,
             PlayerInfoDTO::new
         ));
+
+        dto.winner = winner == null ? null : new PlayerInfoDTO(this.winner);
     
         return dto;
     }
@@ -805,7 +838,7 @@ public class GameInstance {
         dto.ownerId = getOwnerId();
 
         dto.board = getBoard();
-        dto.bank = getBank();
+        dto.bank = new BankDTO(this.getBank());
         dto.players = getPlayers().values().stream()
         .collect(Collectors.toMap(
             Player::getUserId,
@@ -821,7 +854,11 @@ public class GameInstance {
         .map(PlayerInfoDTO::new)   // or player -> new PlayerInfoDTO(player)
         .collect(Collectors.toSet());
 
+        dto.singleDieStats = getSingleDieStats();
+        dto.doubleDieStats = getDoubleDieStats();
+
         dto.you = new PlayerDTO(you);
+        dto.winner = winner == null ? null : new PlayerInfoDTO(this.winner);
     
         return dto;
     }

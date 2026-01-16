@@ -11,11 +11,11 @@ public class Bank {
 
     private ArrayDeque<DevelopmentItem> developments;
 
-    private Random random;
+    private boolean showExactRes;
 
-    public Bank(Random random) {
+    public Bank(Random random, boolean showExactRes) {
 
-        this.random = random;
+        this.showExactRes = showExactRes;
 
         this.resBalance = new HashMap<TileType, Integer>();
         resBalance.put(TileType.wood, 19);
@@ -103,6 +103,14 @@ public class Bank {
 
     public ArrayDeque<DevelopmentItem> getDevelopments() {
         return developments;
+    }
+
+    public int getNumberDevelopments() {
+        return developments.size();
+    }
+
+    public boolean getShowExactRes() {
+        return showExactRes;
     }
 
 }
