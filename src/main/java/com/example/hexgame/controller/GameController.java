@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.example.hexgame.dto.GameConfigDTO;
+
 @RestController
 @RequestMapping("/api/games")
 public class GameController {
@@ -23,10 +25,7 @@ public class GameController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<GameInstance> createGame(@RequestBody boolean[] config) {
-        if (config == null || config.length < 2) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<GameInstance> createGame(@RequestBody GameConfigDTO config) {
         GameInstance g = manager.createGame(config);
         return ResponseEntity.ok(g);
     }

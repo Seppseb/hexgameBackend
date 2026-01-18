@@ -10,6 +10,8 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.example.hexgame.dto.GameConfigDTO;
+
 @Service
 public class GameManagerService {
     private final ConcurrentMap<String, GameInstance> games = new ConcurrentHashMap<>();
@@ -24,7 +26,7 @@ public class GameManagerService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public GameInstance createGame(boolean[] config) {
+    public GameInstance createGame(GameConfigDTO config) {
         String id = UUID.randomUUID().toString();
         GameInstance g = new GameInstance(id, messagingTemplate, config);
         games.put(id, g);
@@ -40,6 +42,7 @@ public class GameManagerService {
     }
 
     public JoinResult joinGame(String gameId, String requestedName) {
+        if (requestedName.length() > 15) return JoinResult.error("Name to long");
         GameInstance gi = games.get(gameId);
         if (gi == null) return JoinResult.error("Game not found");
 

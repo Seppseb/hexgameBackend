@@ -4,6 +4,7 @@ com\example\hexgame\dto\BankDTO.class
 com\example\hexgame\model\CityItem.class
 com\example\hexgame\config\WebSocketConfig.class
 com\example\hexgame\model\Port.class
+com\example\hexgame\dto\GameConfigDTO.class
 com\example\hexgame\model\DevelopmentItem.class
 com\example\hexgame\service\GameManagerService.class
 com\example\hexgame\model\ShopItem.class

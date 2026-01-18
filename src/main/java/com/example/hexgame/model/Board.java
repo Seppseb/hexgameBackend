@@ -29,7 +29,8 @@ public class Board implements Serializable {
     private int generalPorts = 4;
 
 
-    private final int[] numbers = new int[] {0, 0, 1, 2, 2, 2, 2, 0, 2, 2, 2, 2, 1};
+    private final int[] defaultNumberOrder = new int [] {5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11};
+    private final int[] numberQuantity = new int[] {0, 0, 1, 2, 2, 2, 2, 0, 2, 2, 2, 2, 1};
     int[] tilesPerRow = new int[]{3, 4, 5, 4, 3};
     int[] nodesPerRow = new int[] {3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3};
     int[] pathsPerRow = new int[] {6, 4, 8, 5, 10, 6, 10, 5, 8, 4, 6};
@@ -45,7 +46,7 @@ public class Board implements Serializable {
 
     private double numberUnFairnessScore = 0;
 
-    public Board(Random random) {
+    public Board(Random random, int numberOrderConfig) {
         this.random = random;
 
         this.longestRoadCard = new LongestRoadCard();
@@ -54,23 +55,119 @@ public class Board implements Serializable {
         generateNodes();
         generatePaths();
         generatePorts();
+
+        switch (numberOrderConfig) {
+            case 0:
+                //use fixed order
+                setNumbersInCircle(this.defaultNumberOrder);
+                break;
+            case 1:
+                //use random order
+                generateRandomNumbers();
+                break;
+            case 2:
+                //use best random order of n tries
+                List<Integer> fairestNumbers =  generateRandomNumbers();
+                double bestScore = this.getNumberUnFairnessScore();
+                for (int i = 0; i < 200; i++) {
+                    List<Integer> currentNumbers = generateRandomNumbers();
+                    double currentScore = this.getNumberUnFairnessScore();
+                    System.out.println(currentScore);
+                    if (currentScore < bestScore) {
+                        fairestNumbers = currentNumbers;
+                        bestScore = currentScore;
+                    }
+                }
+                setNumbers(fairestNumbers);
+                break;
+            default:
+                break;
+        }
+
+        createNumberToTileMap();
+        
     }
 
     private void generateTiles() {
-        tiles = new Tile[tilesPerRow.length][];
-        tilesWithNumber = new HashMap<>();
-        int[] avaliableNumbers = this.numbers.clone();
+        this.tiles = new Tile[tilesPerRow.length][];
         for (int i = 0; i < tilesPerRow.length; i++) {
             Tile[] row = new Tile[tilesPerRow[i]];
             for (int k = 0; k < row.length; k++) {
                 TileType type = drawType();
-                int number = type == TileType.desert ? 0 : drawNumber(avaliableNumbers);
-                Tile tile = new Tile(type, number, this, i, k);
-                if (!tilesWithNumber.containsKey(number)) tilesWithNumber.put(number, new ArrayList<Tile>());
-                tilesWithNumber.get(number).add(tile);
+                Tile tile = new Tile(type, 0, this, i, k);
                 row[k] = tile;
             }
             tiles[i] = row;
+        }
+    }
+
+    private List<Integer> generateRandomNumbers() {
+        this.numberUnFairnessScore = 0;
+        int[] avaliableNumbers = this.numberQuantity.clone();
+        List<Integer> generatedNumbers = new ArrayList<Integer>();
+        for (int i = 0; i < tilesPerRow.length; i++) {
+            for (int k = 0; k < tilesPerRow[i]; k++) {
+                Tile tile = tiles[i][k];
+                int number = tile.getType() == TileType.desert ? 0 : drawRandomNumber(avaliableNumbers);
+                tile.setNumber(number);
+                generatedNumbers.add(number);
+            }
+        }
+        return generatedNumbers;
+    }
+
+    private void setNumbersInCircle(int[] numbers) {
+        int numberIndex = 0;
+        int rows = tiles.length;
+        for (int distanceBorder = 0; distanceBorder * 2 < rows; distanceBorder++) {
+            for (int k = distanceBorder; k < tiles[distanceBorder].length - distanceBorder; k++) {
+                int i = distanceBorder;
+                if (setTileNumber(tiles[i][k], numbers, numberIndex)) numberIndex++;
+            }
+            for (int i = distanceBorder + 1; i < rows - distanceBorder; i++) {
+                int k = tiles[i].length - 1 - distanceBorder;
+                if (setTileNumber(tiles[i][k], numbers, numberIndex)) numberIndex++;
+            }
+            for (int k = tiles[rows-1-distanceBorder].length -2 - distanceBorder; k >= distanceBorder; k--) {
+                int i = rows - 1 - distanceBorder;
+                if (setTileNumber(tiles[i][k], numbers, numberIndex)) numberIndex++;
+            }
+            for (int i = rows - 2 - distanceBorder; i > distanceBorder; i--) {
+                int k = distanceBorder;
+                if (setTileNumber(tiles[i][k], numbers, numberIndex)) numberIndex++;
+            }
+        }
+    }
+
+    private boolean setTileNumber(Tile tile, int[] numbers, int numberIndex) {
+        if (tile.getType() == TileType.desert) {
+            tile.setNumber(0);
+            return false;
+        }
+        tile.setNumber(numbers[numberIndex]);
+        return true;
+    }
+
+    private void setNumbers(List<Integer> numbers) {
+        int numberIndex = 0;
+        for (int i = 0; i < tilesPerRow.length; i++) {
+            for (int k = 0; k < tilesPerRow[i]; k++) {
+                Tile tile = tiles[i][k];
+                tile.setNumber(numbers.get(numberIndex));
+                numberIndex++;
+            }
+        }
+    }
+
+    private void createNumberToTileMap() {
+        this.tilesWithNumber = new HashMap<>();
+        for (int i = 0; i < tilesPerRow.length; i++) {
+            for (int k = 0; k < tilesPerRow[i]; k++) {
+                Tile tile = tiles[i][k];
+                int number = tile.getNumber();
+                if (!tilesWithNumber.containsKey(number)) tilesWithNumber.put(number, new ArrayList<Tile>());
+                tilesWithNumber.get(number).add(tile);
+            }
         }
     }
 
@@ -322,7 +419,7 @@ public class Board implements Serializable {
         return TileType.desert;
     }
 
-    private int drawNumber(int[] avaliableNumbers) {
+    private int drawRandomNumber(int[] avaliableNumbers) {
         int total = 0;
         for (int i = 0; i < avaliableNumbers.length; i++) {
             total += avaliableNumbers[i];

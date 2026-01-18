@@ -7,14 +7,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Tile implements Serializable {
 
-    private final int number;
+    private int number;
     private final TileType type;
-    private Node[] nodes;
+    private final Node[] nodes;
 
     private Robber robber;
 
-    private int rowIndex;
-    private int colIndex;
+    private final int rowIndex;
+    private final int colIndex;
 
     public Tile(TileType type, int number, Board board, int rowIndex, int colIndex) {
         this.type = type;
@@ -26,6 +26,10 @@ public class Tile implements Serializable {
             this.robber = new Robber(this);
             board.setRobber(this.robber);
         }
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
     }
 
     public int getNumber() {
@@ -55,6 +59,7 @@ public class Tile implements Serializable {
         player.addRes(this.type, 1);
     }
 
+    @Override
     public String toString() {
         return type + ", " + number;
     }

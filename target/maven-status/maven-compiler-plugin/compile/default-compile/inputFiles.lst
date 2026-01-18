@@ -17,6 +17,7 @@ C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Robber.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Player.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\dto\PlayerDTO.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Tile.java
+C:\dev\hexgameBackend\src\main\java\com\example\hexgame\dto\GameConfigDTO.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\GameState.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\TradeOffer.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\GameInstance.java

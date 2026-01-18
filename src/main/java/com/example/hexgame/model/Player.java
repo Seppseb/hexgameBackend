@@ -34,7 +34,7 @@ public class Player {
     private ArrayDeque<CityItem> cities;
 
     //TODO make variable, also other stuff like road amount and other things
-    private int pointsToWin = 3;
+    private int pointsToWin = 10;
 
     public void setNextPlayer(Player nextPlayer) {
         this.nextPlayer = nextPlayer;

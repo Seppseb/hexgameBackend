@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.example.hexgame.dto.BankDTO;
+import com.example.hexgame.dto.GameConfigDTO;
 import com.example.hexgame.dto.GameDTO;
 import com.example.hexgame.dto.GameInfoDTO;
 import com.example.hexgame.dto.PlayerDTO;
@@ -54,20 +55,13 @@ public class GameInstance {
     // Lock for per-game concurrency
     private final transient ReentrantLock lock = new ReentrantLock();
 
-    public GameInstance(String id, SimpMessagingTemplate messagingTemplate, boolean[] config) {
+    public GameInstance(String id, SimpMessagingTemplate messagingTemplate, GameConfigDTO config) {
         this.random = new Random();
         this.id = id;
-        this.board = new Board(this.random);
-        boolean fairNumbers = config != null && config.length > 0 ? config[0] : false;
-        boolean showBank = config != null && config.length > 1 ? config[1] : false;
-        if (fairNumbers) {
-            for (int i = 0; i < 200; i++) {
-                Board newBoard = new Board(this.random);
-                if (newBoard.getNumberUnFairnessScore() < this.board.getNumberUnFairnessScore()) {
-                    this.board = newBoard;
-                }
-            }
-        }
+        int numberOrder = config != null ? config.getNumberOrder() : 0;
+        boolean showBank = config != null ? config.getShowBank() : false;
+        //TODO change handle numberOrder
+        this.board = new Board(this.random, numberOrder);
         this.bank = new Bank(this.random, showBank);
         this.messagingTemplate = messagingTemplate;
         this.mostKnightsCard = new MostKnightsCard();
@@ -844,7 +838,7 @@ public class GameInstance {
             Player::getUserId,
             PlayerInfoDTO::new
         ));
-        dto.currentPlayer = new PlayerInfoDTO(getCurrentPlayer());
+        dto.currentPlayer = getCurrentPlayer() == null ? null : new PlayerInfoDTO(getCurrentPlayer());
 
         dto.currentTradeOffer = getCurrentTradeOffer();
         dto.isWaitingForMovingRobber = getIsWaitingForMovingRobber();
