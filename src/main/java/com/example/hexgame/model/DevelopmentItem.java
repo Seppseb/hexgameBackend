@@ -5,6 +5,7 @@ import java.util.HashMap;
 public class DevelopmentItem extends ShopItem {
 
     private DevelopmentType type;
+    private int canBePlayedInRound;
 
     //TODO add bought in round counter to stop from using in same round
 
@@ -19,6 +20,14 @@ public class DevelopmentItem extends ShopItem {
 
     public DevelopmentType getType() {
         return type;
+    }
+
+    public int getCanBePlayedInRound() {
+        return canBePlayedInRound;
+    }
+
+    public void setCanBePlayedInRound(int canBePlayedInRound) {
+        this.canBePlayedInRound = canBePlayedInRound;
     }
 
 }

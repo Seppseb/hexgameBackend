@@ -200,6 +200,74 @@ public class GameController {
         ));
     }
 
+    @PostMapping("/{gameId}/throwDiceForTurn")
+    public ResponseEntity<?> throwDiceForTurn(@PathVariable String gameId,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.throwDiceForTurn(gameId, userId);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "Throwing dice failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "threw dice"
+        ));
+    }
+
+    @PostMapping("/{gameId}/confirmDice")
+    public ResponseEntity<?> confirmDice(@PathVariable String gameId,
+                                    @CookieValue(value = "userId", required = false) String userId,
+                                    HttpServletResponse response
+                                    ) {
+
+        if (userId == null) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "not logged in"));
+        }
+
+        Optional<GameInstance> gi = manager.getGame(gameId);
+        if (!gi.isPresent()) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "game not found"));
+        }
+
+        boolean success = manager.confirmDice(gameId, userId);
+
+        if (!success) {
+            return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("success", false, "message", "Confirming dice failed"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "gameId", gameId,
+                "message", "confirmed dice"
+        ));
+    }
+
     @PostMapping("/{gameId}/build/{row}/{col}")
     public ResponseEntity<?> build(@PathVariable String gameId,
                                     @PathVariable int row,
@@ -332,13 +400,13 @@ public class GameController {
         if (!success) {
             return ResponseEntity
                         .badRequest()
-                        .body(Map.of("success", false, "message", "buying failed"));
+                        .body(Map.of("success", false, "message", "playing card failed"));
         }
 
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "gameId", gameId,
-                "message", "bougth"
+                "message", "played card"
         ));
     }
 

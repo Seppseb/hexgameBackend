@@ -20,10 +20,16 @@ public class GameDTO {
     public PlayerInfoDTO currentPlayer;
 
     public TradeOffer currentTradeOffer;
-    public boolean isWaitingForMovingRobber;
     public boolean isInitialIsPlacingRoad;
+    public boolean isBuildPhase;
+    public boolean isWaitingForMovingRobber;
     public boolean isWaitingForChoosingVictim;
     public Set<PlayerInfoDTO> possibleVictims;
+
+    public boolean playedDevCardThisRound;
+
+    public int[] lastDiceRoll;
+    public int roundNumber;
 
     public int[] singleDieStats;
     public int[] doubleDieStats;

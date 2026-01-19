@@ -26,12 +26,16 @@ public class GameInstance {
     private Player[] initialPlacementOrder;
     private int initialPlacementIndex = 0;
     private boolean initialIsPlacingRoad = false;
+    private boolean isBuildPhase = true;
     private boolean isWaitingForPlayerRessourceChange = false;
     private boolean isWaitingForFreeRoadPlacement = false;
     private boolean isWaitingForMovingRobber = false;
     private boolean isWaitingForChoosingVictim = false;
     private Set<Player> possibleVictims;
+    private boolean playedDevCardThisRound = false;
+    private int[] lastDiceRoll;
 
+    private int roundNumber = 0;
     private Player winner = null;
 
     private int[] singleDieStats;
@@ -60,7 +64,6 @@ public class GameInstance {
         this.id = id;
         int numberOrder = config != null ? config.getNumberOrder() : 0;
         boolean showBank = config != null ? config.getShowBank() : false;
-        //TODO change handle numberOrder
         this.board = new Board(this.random, numberOrder);
         this.bank = new Bank(this.random, showBank);
         this.messagingTemplate = messagingTemplate;
@@ -172,7 +175,7 @@ public class GameInstance {
     }
 
     public void sendMessage(String type, String message, String targetPlayerId, String causer) {
-        System.out.println(type + " for: " + ("".equals(targetPlayerId) ? "all" : targetPlayerId) + ": " + message);
+        System.out.println(causer + ": " + type + " for: " + ("".equals(targetPlayerId) ? "all" : targetPlayerId) + ": " + message);
         messagingTemplate.convertAndSend(
             "/topic/games/" + id,
             Map.of("type", type, "message", message, "playerId", targetPlayerId, "game", this.toInfoDTO(), "playerName", causer)
@@ -182,6 +185,8 @@ public class GameInstance {
     public void nextInitialBuild() {
         if (initialPlacementIndex >= initialPlacementOrder.length) {
             state = GameState.IN_PROGRESS;
+            roundNumber++;
+            isBuildPhase = false;
             startTurn();
             return;
         }
@@ -197,6 +202,7 @@ public class GameInstance {
         if (board.getNodes().length <= row || board.getNodes()[row].length <= col ) return false;
         Node spot = board.getNodes()[row][col];
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
@@ -212,6 +218,7 @@ public class GameInstance {
                 sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
                 break;
             case IN_PROGRESS:
+            case FINISHED:
                 if (spot.getBuildFactor() == 0) {
                     if (!player.canBuildVillage() || !spot.canBuildVillage(player)) return false;
                     player.buildVillage();
@@ -236,6 +243,7 @@ public class GameInstance {
         Player player = players.get(playerId);
         if (board.getPaths().length <= row || board.getPaths()[row].length <= col ) return false;
         Path path = board.getPaths()[row][col];
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
@@ -251,6 +259,7 @@ public class GameInstance {
                 nextInitialBuild();
                 break;
             case IN_PROGRESS:
+            case FINISHED:
                 boolean isFree = player.canBuildFreeRoad(false);
                 if (!isFree && !player.canBuildRoad()) return false;
                 if (!path.canBuildRoad(player)) return false;
@@ -270,14 +279,16 @@ public class GameInstance {
     public boolean buyDevelopment(String playerId) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 if (!player.canBuyDevelopment()) return false;
-                player.buyDevelopment();
+                player.buyDevelopment(roundNumber);
                 sendMessage("BOUGTH_DEVELOPMENT", playerId, "", player.getName());
                 break;
             default:
@@ -295,7 +306,17 @@ public class GameInstance {
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
-                DevelopmentItem card = player.getDevelopmentCard(type);
+            case FINISHED:
+                DevelopmentItem card = player.getDevelopmentCard(type, roundNumber);
+                if (card == null) return false;
+                if (!isBuildPhase && card.getType() != DevelopmentType.knight) return false;
+                if (card.getType() != DevelopmentType.victoryPoint) {
+                    if (this.playedDevCardThisRound) {
+                        return false;
+                    } else {
+                        this.playedDevCardThisRound = true;
+                    }
+                }
                 player.playDevelopmentCard(card);
                 switch (card.getType()) {
                     case knight:
@@ -353,18 +374,21 @@ public class GameInstance {
     public void sendWin(Player player) {
         if (this.winner != null) return;
         this.winner = player;
+        this.state = GameState.FINISHED;
         sendMessage("WON", player.getUserId(), "", player.getName());
     }
 
     public boolean bankTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 HashMap<TileType, Integer> tradeRes = new HashMap<TileType, Integer>();
                 tradeRes.put(TileType.wood, wood);
                 tradeRes.put(TileType.clay, clay);
@@ -416,12 +440,14 @@ public class GameInstance {
     public boolean askPlayerTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
         Player player = players.get(playerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 if (wood < 0 && !player.hasRes(TileType.wood, -wood)) return false;
                 if (clay < 0 && !player.hasRes(TileType.clay, -clay)) return false;
                 if (wheat < 0 && !player.hasRes(TileType.wheat, -wheat)) return false;
@@ -439,6 +465,7 @@ public class GameInstance {
     public boolean cancelPlayerTrade(String playerId) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
@@ -446,6 +473,7 @@ public class GameInstance {
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 this.currentTradeOffer = null;
                 sendMessage("CANCLED_TRADE_OFFER", playerId, "", player.getName());
                 break;
@@ -458,6 +486,7 @@ public class GameInstance {
     public boolean acceptPlayerTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
@@ -465,6 +494,7 @@ public class GameInstance {
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 if (wood > 0 && !player.hasRes(TileType.wood, wood)) return false;
                 if (clay > 0 && !player.hasRes(TileType.clay, clay)) return false;
                 if (wheat > 0 && !player.hasRes(TileType.wheat, wheat)) return false;
@@ -483,6 +513,7 @@ public class GameInstance {
     public boolean declinePlayerTrade(String playerId, int wood, int clay, int wheat, int wool, int stone) {
         if (currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
@@ -490,6 +521,7 @@ public class GameInstance {
         if (currentTradeOffer == null) return false;
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 if (!this.currentTradeOffer.hasValues(wood, clay, wheat, wool, stone)) return false;
                 this.currentTradeOffer.decline(playerId);
                 sendMessage("DECLINED_TRADE_OFFER", playerId, "", player.getName());
@@ -504,6 +536,7 @@ public class GameInstance {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (currentPlayer.getUserId().equals(partnerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
@@ -513,6 +546,7 @@ public class GameInstance {
         Player partner = players.get(partnerId);
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 int wood = this.currentTradeOffer.getWood();
                 int clay = this.currentTradeOffer.getClay();
                 int wheat = this.currentTradeOffer.getWheat();
@@ -576,12 +610,12 @@ public class GameInstance {
     }
 
     public boolean settleDebt(String playerId, int wood, int clay, int wheat, int wool, int stone) {
-        if (isWaitingForFreeRoadPlacement) return false;
         if (!isWaitingForPlayerRessourceChange) return false;
         Player player = players.get(playerId);
         if (player.getResDebt() == 0) return false;
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 HashMap<TileType, Integer> tradeRes = new HashMap<>();
                 tradeRes.put(TileType.wood, wood);
                 tradeRes.put(TileType.clay, clay);
@@ -654,6 +688,7 @@ public class GameInstance {
         if (tile.hasRobber()) return false;
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 boolean success = oldTile.moveRobber(tile);
                 if (!success) return false;
                 this.isWaitingForMovingRobber = false;
@@ -694,6 +729,7 @@ public class GameInstance {
         if (isWaitingForMovingRobber) return false;
         if (null == state) return false; else switch (state) {
             case IN_PROGRESS:
+            case FINISHED:
                 isWaitingForChoosingVictim = true;
                 Player victim = players.get(victimId);
                 if (victim == null) return false;
@@ -713,20 +749,39 @@ public class GameInstance {
     public boolean endTurn(String playerId) {
         if (!currentPlayer.getUserId().equals(playerId)) return false;
         if (isWaitingForFreeRoadPlacement) return false;
+        if (!isBuildPhase) return false;
         if (isWaitingForPlayerRessourceChange) return false;
         if (isWaitingForMovingRobber) return false;
         if (isWaitingForChoosingVictim) return false;
+        this.isBuildPhase = false;
         this.currentTradeOffer = null;
-        currentPlayer = currentPlayer.getNextPlayer();
+        this.currentPlayer = currentPlayer.getNextPlayer();
+        this.playedDevCardThisRound = false;
+        if (currentPlayer.getPlayerIndex() == 0) roundNumber++;
         startTurn();
         //sendMessage("END_TURN", "", currentPlayer.getUserId());
         return true;       
     }
 
-    //TODO handle endturn -> phase before turn to play knigth -> start turn
-
     public void startTurn() {
+        sendMessage("START_TURN", "", currentPlayer.getUserId(), currentPlayer.getName());
+    }
+
+    public boolean throwDiceForTurn(String playerId) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (isBuildPhase) return false;
+        if (lastDiceRoll != null) return false;
         int[] d = throw2Dice(true);
+        lastDiceRoll = d;
+        sendMessage("DICE_RESULT", "" + d[0] + "" + d[1], currentPlayer.getUserId(), currentPlayer.getName());
+        return true; 
+    }
+
+    public boolean confirmDice(String playerId) {
+        if (!currentPlayer.getUserId().equals(playerId)) return false;
+        if (isBuildPhase) return false;
+        if (lastDiceRoll == null) return false;
+        int[] d = lastDiceRoll;
         board.handleDice(d[0] + d[1]);
         if (d[0] + d[1] == 7) {
             this.isWaitingForMovingRobber = true;
@@ -738,7 +793,10 @@ public class GameInstance {
                 }
             }
         }
-        sendMessage("START_TURN", "" + d[0] + "" + d[1], currentPlayer.getUserId(), currentPlayer.getName());            
+        isBuildPhase = true;
+        lastDiceRoll = null;
+        sendMessage("THREW_DICE", "" + d[0] + "" + d[1], "", currentPlayer.getName());   
+        return true;
     }
 
     public Bank getBank() {
@@ -763,12 +821,16 @@ public class GameInstance {
         return ownerId;
     }
 
-    public boolean getIsWaitingForMovingRobber() {
-        return isWaitingForMovingRobber;
-    }
-
     public boolean getIsInitialIsPlacingRoad() {
         return initialIsPlacingRoad;
+    }
+
+    public boolean getIsBuildPhase() {
+        return isBuildPhase;
+    }
+
+    public boolean getIsWaitingForMovingRobber() {
+        return isWaitingForMovingRobber;
     }
 
     public boolean getIsWaitingForChoosingVictim() {
@@ -777,6 +839,10 @@ public class GameInstance {
 
     public Set<Player> getPossibleVictims() {
         return possibleVictims;
+    }
+
+    public boolean getPlayedDevCardThisRound() {
+        return playedDevCardThisRound;
     }
 
     public int[] getSingleDieStats() {
@@ -789,6 +855,14 @@ public class GameInstance {
 
     public Player getWinner() {
         return winner;
+    }
+
+    public int[] getLastDiceRoll() {
+        return lastDiceRoll;
+    }
+
+    public int getRoundNumber() {
+        return roundNumber;
     }
 
     @JsonIgnore
@@ -841,12 +915,18 @@ public class GameInstance {
         dto.currentPlayer = getCurrentPlayer() == null ? null : new PlayerInfoDTO(getCurrentPlayer());
 
         dto.currentTradeOffer = getCurrentTradeOffer();
-        dto.isWaitingForMovingRobber = getIsWaitingForMovingRobber();
         dto.isInitialIsPlacingRoad = getIsInitialIsPlacingRoad();
+        dto.isWaitingForMovingRobber = getIsWaitingForMovingRobber();
+        dto.isBuildPhase = getIsBuildPhase();
         dto.isWaitingForChoosingVictim = getIsWaitingForChoosingVictim();
         dto.possibleVictims = getPossibleVictims().stream()
         .map(PlayerInfoDTO::new)   // or player -> new PlayerInfoDTO(player)
         .collect(Collectors.toSet());
+
+        dto.playedDevCardThisRound = getPlayedDevCardThisRound();
+
+        dto.lastDiceRoll = getLastDiceRoll();
+        dto.roundNumber = getRoundNumber();
 
         dto.singleDieStats = getSingleDieStats();
         dto.doubleDieStats = getDoubleDieStats();

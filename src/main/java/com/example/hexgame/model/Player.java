@@ -166,7 +166,7 @@ public class Player {
         return resDebt;
     }
 
-    public DevelopmentItem getDevelopmentCard(String type) {
+    public DevelopmentItem getDevelopmentCard(String type, int roundNumber) {
         DevelopmentType cardType;
         switch (type) {
             case "knight":
@@ -189,7 +189,7 @@ public class Player {
         }
 
         for (DevelopmentItem card: developments) {
-            if (card.getType() == cardType) return card;
+            if (card.getType() == cardType && card.getCanBePlayedInRound() <= roundNumber) return card;
         }
 
         return null;
@@ -303,9 +303,12 @@ public class Player {
         return this.bank.getDevelopments().size() >= 1 && canBuildItem(this.bank.getDevelopments().peekFirst());
     }
 
-    public boolean buyDevelopment() {
+    public boolean buyDevelopment(int roundNumber) {
         if (!canBuyDevelopment()) return false;
         DevelopmentItem development = this.bank.getDevelopments().removeFirst();
+        int canBePlayedInRound = roundNumber;
+        if (development.getType() != DevelopmentType.victoryPoint) canBePlayedInRound++;
+        development.setCanBePlayedInRound(canBePlayedInRound);
         buildItem(development);
         this.developments.add(development);
         return true;

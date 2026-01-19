@@ -100,6 +100,32 @@ public class GameManagerService {
         }
     }
 
+    public boolean throwDiceForTurn(String gameId, String playerId) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.throwDiceForTurn(playerId);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
+    public boolean confirmDice(String gameId, String playerId) {
+        if (gameId == null) return false;
+        GameInstance gi = games.get(gameId);
+        if (gi == null) return false;
+        gi.getLock().lock();
+        try {
+            if (!gi.getPlayers().containsKey(playerId)) return false;
+            return gi.confirmDice(playerId);
+        } finally {
+            gi.getLock().unlock();
+        }
+    }
+
     public boolean build(String gameId, String playerId, int row, int col) {
         if (gameId == null) return false;
         GameInstance gi = games.get(gameId);
