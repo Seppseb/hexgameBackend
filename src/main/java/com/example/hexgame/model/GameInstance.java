@@ -133,11 +133,11 @@ public class GameInstance {
         colors.add("green");
         colors.add("yellow");
         for (Player player : players.values()) {
-            player.addRes(TileType.wood, 5);
-            player.addRes(TileType.clay, 5);
-            player.addRes(TileType.wheat, 5);
-            player.addRes(TileType.wool, 5);
-            player.addRes(TileType.stone, 5);
+            //player.addRes(TileType.wood, 5);
+            //player.addRes(TileType.clay, 5);
+            //player.addRes(TileType.wheat, 5);
+            //player.addRes(TileType.wool, 5);
+            //player.addRes(TileType.stone, 5);
             int i = random.nextInt(colors.size());
             player.setColor(colors.get(i));
             colors.remove(i);
@@ -829,6 +829,14 @@ public class GameInstance {
         return isBuildPhase;
     }
 
+    public boolean getIsWaitingForFreeRoadPlacement() {
+        return isWaitingForFreeRoadPlacement;
+    }
+
+    public boolean getIsWaitingForPlayerRessourceChange() {
+        return isWaitingForPlayerRessourceChange;
+    }
+
     public boolean getIsWaitingForMovingRobber() {
         return isWaitingForMovingRobber;
     }
@@ -916,6 +924,8 @@ public class GameInstance {
 
         dto.currentTradeOffer = getCurrentTradeOffer();
         dto.isInitialIsPlacingRoad = getIsInitialIsPlacingRoad();
+        dto.isWaitingForFreeRoadPlacement = getIsWaitingForFreeRoadPlacement();
+        dto.isWaitingForPlayerRessourceChange = getIsWaitingForPlayerRessourceChange();
         dto.isWaitingForMovingRobber = getIsWaitingForMovingRobber();
         dto.isBuildPhase = getIsBuildPhase();
         dto.isWaitingForChoosingVictim = getIsWaitingForChoosingVictim();
@@ -931,7 +941,7 @@ public class GameInstance {
         dto.singleDieStats = getSingleDieStats();
         dto.doubleDieStats = getDoubleDieStats();
 
-        dto.you = new PlayerDTO(you);
+        dto.you = new PlayerDTO(you, this.state == GameState.PLACEMENT);
         dto.winner = winner == null ? null : new PlayerInfoDTO(this.winner);
     
         return dto;

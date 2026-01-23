@@ -28,12 +28,17 @@ public class PlayerDTO {
     public int totalResBalance;
     public int resDebt;
 
+    public boolean canBuyRoad;
+    public boolean canBuyVillage;
+    public boolean canBuyCity;
+    public boolean canBuyDevelopment;
+
 
 
     public HashMap<TileType, Integer> resBalance;
     public ArrayDeque<DevelopmentItem> developments;
 
-    public PlayerDTO(Player p) {
+    public PlayerDTO(Player p, boolean isPlacementPhase) {
         this.playerIndex = p.getPlayerIndex();
         this.userId = p.getUserId();
         this.name = p.getName();
@@ -53,6 +58,11 @@ public class PlayerDTO {
         this.totalResBalance = p.getTotalResBalance();
         this.resDebt = p.getResDebt();
 
+
+        this.canBuyRoad = p.canBuildFreeRoad(isPlacementPhase) || p.canBuildRoad();
+        this.canBuyVillage = (p.canBuildFreeVillage() && isPlacementPhase) || p.canBuildVillage();
+        this.canBuyCity = p.canBuildCity();
+        this.canBuyDevelopment = p.canBuyDevelopment();
 
 
         this.resBalance = p.getResBalance();

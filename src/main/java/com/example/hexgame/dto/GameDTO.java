@@ -22,6 +22,8 @@ public class GameDTO {
     public TradeOffer currentTradeOffer;
     public boolean isInitialIsPlacingRoad;
     public boolean isBuildPhase;
+    public boolean isWaitingForFreeRoadPlacement;
+    public boolean isWaitingForPlayerRessourceChange;
     public boolean isWaitingForMovingRobber;
     public boolean isWaitingForChoosingVictim;
     public Set<PlayerInfoDTO> possibleVictims;
