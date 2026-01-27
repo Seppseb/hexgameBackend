@@ -215,7 +215,7 @@ public class GameInstance {
                 boolean isSecondPlaceRound = initialPlacementIndex > players.size();
                 spot.buildInitialVillage(player, isSecondPlaceRound);
                 initialIsPlacingRoad = true;
-                sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
+                sendMessage("BUILD_VILLAGE", playerId + " at " + row + ", " + col, "", player.getName());
                 break;
             case IN_PROGRESS:
             case FINISHED:
@@ -224,12 +224,12 @@ public class GameInstance {
                     player.buildVillage();
                     spot.buildVillage(player);
                     board.checkLongestRoad(); //since villages could break up roads
-                    sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
+                    sendMessage("BUILD_VILLAGE", playerId + " at " + row + ", " + col, "", player.getName());
                 } else {
                     if (!player.canBuildCity() || !spot.canBuildCity(player)) return false;
                     player.buildCity();
                     spot.buildCity(player);
-                    sendMessage("BUILD", playerId + " at " + row + ", " + col, "", player.getName());
+                    sendMessage("BUILD_CITY", playerId + " at " + row + ", " + col, "", player.getName());
                 }
                 break;
             default:
