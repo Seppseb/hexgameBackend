@@ -37,9 +37,8 @@ public class GameController {
 
     @PostMapping("/{gameId}/join")
     public ResponseEntity<?> joinGame(@PathVariable String gameId,
-                                    @CookieValue(value = "userId", required = false) String userId,
-                                    @RequestParam(required = false) String name,
-                                    HttpServletResponse response
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
+                                    @RequestParam(required = false) String name
                                     ) {
 
         boolean joined = false;
@@ -64,32 +63,6 @@ public class GameController {
             userId = r.userId;
             gameId = r.gameId;
 
-
-            // --- START COOKIE FIX ---
-        
-            // The SameSite attribute cannot be set directly on the Cookie object
-            // You must manually construct the Set-Cookie header string.
-
-            // 1. Define the cookie values
-            String userIdValue = r.userId;
-            int maxAge = 60 * 60 * 24 * 30; // 30 days
-            String path = "/";
-            
-            // 2. Construct the Secure and SameSite=None header string
-            // The components must be URL-encoded, but since r.userId is likely a UUID, it's usually safe.
-            
-            // Constructing the header for userId
-            String userIdCookieHeader = String.format(
-                "userId=%s; Path=%s; Max-Age=%d; Secure; SameSite=None", 
-                userIdValue, 
-                path, 
-                maxAge
-            );
-            response.addHeader("Set-Cookie", userIdCookieHeader);
-            // --- END COOKIE FIX ---
-
-
-
         }
         // success response (JSON)
         return ResponseEntity.ok(Map.of(
@@ -101,14 +74,14 @@ public class GameController {
     }
 
     @PostMapping("/leave")
-    public ResponseEntity<?> leaveGame(@CookieValue(value = "userId", required = false) String userId) {
+    public ResponseEntity<?> leaveGame(@RequestHeader(value = "X-User-Id", required = false) String userId) {
         if (userId == null) return ResponseEntity.badRequest().body("no userId cookie");
         boolean ok = manager.leaveGame(userId);
         return ok ? ResponseEntity.ok("left") : ResponseEntity.badRequest().body("leave failed");
     }
 
     @GetMapping("/whoAmI")
-    public ResponseEntity<?> getCookieValues(@CookieValue(value = "userId", required = false) String userId) {
+    public ResponseEntity<?> getCookieValues(@RequestHeader(value = "X-User-Id", required = false) String userId) {
         if (userId == null) return ResponseEntity.badRequest().body("no userId cookie");
         String userName = manager.getPlayerName(userId);
         return ResponseEntity.ok(userId + ";" + userName);
@@ -124,7 +97,7 @@ public class GameController {
     @GetMapping("/{gameId}")
     public ResponseEntity<?> getGame(
             @PathVariable String gameId,
-            @CookieValue(value = "userId", required = false) String userId,
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
             HttpServletResponse response) {
 
         return manager.getGame(gameId)
@@ -134,7 +107,7 @@ public class GameController {
 
     @PostMapping("/{gameId}/start")
     public ResponseEntity<?> startGame(@PathVariable String gameId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -168,7 +141,7 @@ public class GameController {
 
     @PostMapping("/{gameId}/ready")
     public ResponseEntity<?> sendReady(@PathVariable String gameId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -202,7 +175,7 @@ public class GameController {
 
     @PostMapping("/{gameId}/throwDiceForTurn")
     public ResponseEntity<?> throwDiceForTurn(@PathVariable String gameId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -236,7 +209,7 @@ public class GameController {
 
     @PostMapping("/{gameId}/confirmDice")
     public ResponseEntity<?> confirmDice(@PathVariable String gameId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -272,7 +245,7 @@ public class GameController {
     public ResponseEntity<?> build(@PathVariable String gameId,
                                     @PathVariable int row,
                                     @PathVariable int col,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -308,7 +281,7 @@ public class GameController {
     public ResponseEntity<?> buildRoad(@PathVariable String gameId,
                                     @PathVariable int row,
                                     @PathVariable int col,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -342,7 +315,7 @@ public class GameController {
 
     @PostMapping("/{gameId}/buyDevelopment")
     public ResponseEntity<?> buyDevelopment(@PathVariable String gameId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -378,7 +351,7 @@ public class GameController {
     public ResponseEntity<?> playDevelopment(@PathVariable String gameId,
                                     @PathVariable String type,
                                     @PathVariable String resType,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -417,7 +390,7 @@ public class GameController {
                                     @PathVariable int wheat,
                                     @PathVariable int wool,
                                     @PathVariable int stone,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -456,7 +429,7 @@ public class GameController {
                                     @PathVariable int wheat,
                                     @PathVariable int wool,
                                     @PathVariable int stone,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -490,7 +463,7 @@ public class GameController {
 
     @PostMapping("/{gameId}/cancelPlayerTrade")
     public ResponseEntity<?> cancelPlayerTrade(@PathVariable String gameId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -529,7 +502,7 @@ public class GameController {
                                     @PathVariable int wheat,
                                     @PathVariable int wool,
                                     @PathVariable int stone,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -568,7 +541,7 @@ public class GameController {
                                     @PathVariable int wheat,
                                     @PathVariable int wool,
                                     @PathVariable int stone,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -603,7 +576,7 @@ public class GameController {
     @PostMapping("/{gameId}/finishPlayerTrade/{partnerId}")
     public ResponseEntity<?> finishPlayerTrade(@PathVariable String gameId,
                                     @PathVariable String partnerId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -642,7 +615,7 @@ public class GameController {
                                     @PathVariable int wheat,
                                     @PathVariable int wool,
                                     @PathVariable int stone,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -680,7 +653,7 @@ public class GameController {
                                     @PathVariable int oldCol,
                                     @PathVariable int row,
                                     @PathVariable int col,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -715,7 +688,7 @@ public class GameController {
     @PostMapping("/{gameId}/chooseVictim/{victimId}")
     public ResponseEntity<?> chooseVictim(@PathVariable String gameId,
                                     @PathVariable String victimId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
@@ -750,7 +723,7 @@ public class GameController {
 
     @PostMapping("/{gameId}/endTurn")
     public ResponseEntity<?> endTurn(@PathVariable String gameId,
-                                    @CookieValue(value = "userId", required = false) String userId,
+                                    @RequestHeader(value = "X-User-Id", required = false) String userId,
                                     HttpServletResponse response
                                     ) {
 
