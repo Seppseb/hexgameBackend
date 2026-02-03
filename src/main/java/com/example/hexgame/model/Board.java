@@ -6,34 +6,23 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 
 // Keep board serializable for JSON transport. Add fields you need.
 public class Board implements Serializable {
 
     private final Random random;
+    private final BoardConfig config;
 
-    private int wood = 4;
-    private int clay = 3;
-    private int wool = 4;
-    private int wheat = 4;
-    private int stone = 3;
-    private int desert = 1;
+    private Map<TileType, Integer> tileCounts;
+    private Map<TileType, Integer> portCounts;
 
-
-    private int woodPorts = 1;
-    private int clayPorts = 1;
-    private int woolPorts = 1;
-    private int wheatPorts = 1;
-    private int stonePorts = 1;
-    private int generalPorts = 4;
-
-
-    private final int[] defaultNumberOrder = new int [] {5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11};
-    private final int[] numberQuantity = new int[] {0, 0, 1, 2, 2, 2, 2, 0, 2, 2, 2, 2, 1};
-    int[] tilesPerRow = new int[]{3, 4, 5, 4, 3};
-    int[] nodesPerRow = new int[] {3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3};
-    int[] pathsPerRow = new int[] {6, 4, 8, 5, 10, 6, 10, 5, 8, 4, 6};
+    private final int[] defaultNumberOrder;
+    private int[] numberQuantity;
+    int[] tilesPerRow;
+    int[] nodesPerRow;//TODO check if new generation is correct nodes and paths = new int[] {3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3};
+    int[] pathsPerRow;// = new int[] {6, 4, 8, 5, 10, 6, 10, 5, 8, 4, 6};
 
 
     private Tile [][] tiles;
@@ -46,12 +35,43 @@ public class Board implements Serializable {
 
     private double numberUnFairnessScore = 0;
 
-    public Board(Random random, int numberOrderConfig) {
+    public Board(Random random, int numberOrderConfig, int boardSize) {
         this.random = random;
+        this.config = BoardConfigs.fromSize(boardSize);
+        this.tileCounts = new HashMap<>(this.config.getTileCounts());
+        this.portCounts = new HashMap<>(this.config.getPortCounts());
+        this.numberQuantity = this.config.getNumberQuantity().clone();
+        this.defaultNumberOrder = this.config.getDefaultNumberOrder();
 
         this.longestRoadCard = new LongestRoadCard();
 
-        generateTiles();
+        this.tilesPerRow = new int[boardSize];
+        int edgeSize = (boardSize + 1) / 2;
+        for (int i = 0; i < edgeSize; i++) {
+            tilesPerRow[i] = i + edgeSize;
+            tilesPerRow[boardSize-1-i] = i + edgeSize;
+        }
+        int nodeSize = 2 * (boardSize + 1);
+        this.nodesPerRow = new int[nodeSize];
+        for (int i = 0; i < nodeSize / 2; i++) {
+            int nodeAmmount = edgeSize + (i + 1) / 2;
+            this.nodesPerRow[i] = nodeAmmount;
+            this.nodesPerRow[nodeSize - 1 - i] = nodeAmmount;
+        }
+        int pathSize = nodeSize - 1;
+        this.pathsPerRow = new int[pathSize];
+        for (int i = 0; i < edgeSize; i++) {
+            int i1 = 2 * i;
+            int i2 = i1 + 1;
+            pathsPerRow[i1] = (i + edgeSize) * 2;
+            pathsPerRow[i2] = i + edgeSize + 1;
+            pathsPerRow[pathSize-1-i1] = (i + edgeSize) * 2;
+            pathsPerRow[pathSize-1-i2] = i + edgeSize + 1;
+        }
+
+        //TODO fix generation for other sizes -> stop size 3?
+
+        generateTiles(); //TODO set type number for eacch size
         generateNodes();
         generatePaths();
         generatePorts();
@@ -172,8 +192,9 @@ public class Board implements Serializable {
     }
 
     private void generateNodes() {
-        nodes = new Node[nodesPerRow.length][];
-        for (int i = 0; i < nodesPerRow.length; i++) {
+        int nodeRows = nodesPerRow.length;
+        nodes = new Node[nodeRows][];
+        for (int i = 0; i < nodeRows; i++) {
             Node[] row = new Node[nodesPerRow[i]];
             for (int k = 0; k < row.length; k++) {
                 Node node = new Node();
@@ -197,11 +218,11 @@ public class Board implements Serializable {
 
                     }
                     // bot tile of even row
-                    if (i <= 4) {
+                    if (i < nodeRows / 2) {
                         Tile bot = tiles[i/2][k];
                         bot.setNode(0 , node);
                         node.setTile(1, bot);
-                    } else if (i <= 8) {
+                    } else if (i < nodeRows - 2) {
                         if (k >= 1 && k <= tiles[i/2].length) {
                             Tile bot = tiles[i/2][k-1];
                             bot.setNode(0 , node);
@@ -211,7 +232,7 @@ public class Board implements Serializable {
                 } else {
                     // 2 top conn
                     int topTileI = (i - 3) / 2;
-                    if (i<=5) {
+                    if (i < nodeRows / 2) {
                         if (k > 0) {
                             Node leftTop = nodes[i-1][k-1];
                             leftTop.setNeighbour(1, node);
@@ -249,7 +270,7 @@ public class Board implements Serializable {
                         top.setNode(3, node);
                         node.setTile(0, top);
 
-                        if (i <= 9) {
+                        if (i < nodeRows - 1) {
                             if (k >= 1) {
                                 Tile botLeft = tiles[topTileI+1][k-1];
                                 botLeft.setNode(1, node);
@@ -270,14 +291,15 @@ public class Board implements Serializable {
     }
 
     private void generatePaths() {
-        paths = new Path[pathsPerRow.length][];
-        for (int i = 0; i < pathsPerRow.length; i++) {
+        int pathRows = pathsPerRow.length;
+        paths = new Path[pathRows][];
+        for (int i = 0; i < pathRows; i++) {
             Path[] row = new Path[pathsPerRow[i]];
             for (int k = 0; k < row.length; k++) {
                 Path path = new Path();
                 if (i % 2 == 0) {
                     // horrizontal
-                    if (i <= 4) {
+                    if (i < pathRows / 2) {
                         if (k % 2 == 0) {
                             Node left = nodes[i+1][k/2];
                             Node rigth = nodes[i][k/2];
@@ -328,7 +350,7 @@ public class Board implements Serializable {
     private void generatePorts() {
         //                 upper row         lower row                        side rows without upper or lower
         int numberCoasts = pathsPerRow[0] + pathsPerRow[pathsPerRow.length-1] + 2 * pathsPerRow.length - 4;
-        int totalPorts = woodPorts + clayPorts + woolPorts + wheatPorts + stonePorts + generalPorts;
+        int totalPorts = portCounts.values().stream().filter(Objects::nonNull).mapToInt(Integer::intValue).sum();
         boolean[] hasPort = distributePorts(numberCoasts, totalPorts);
         int coastIndex = 0;
         //upper row
@@ -380,46 +402,23 @@ public class Board implements Serializable {
     }
 
     private TileType drawType() {
-        int totalTypes = wood + clay + wool + wheat + stone + desert;
-        if (totalTypes == 0) throw new java.lang.Error("BUG: drew too many types");
+        int totalTypeCount = tileCounts.values().stream().filter(Objects::nonNull).mapToInt(Integer::intValue).sum();
+        if (totalTypeCount == 0) throw new java.lang.Error("BUG: drew too many types");
         // 0 - totalTypes;
-        int typeNumber = random.nextInt(totalTypes) + 1;
-        int limit = wood;
-        if (typeNumber <= limit) {
-            if (wood < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
-            wood--;
-            return TileType.wood;
+        int typeNumber = random.nextInt(totalTypeCount) + 1;
+        int limit = 0;
+        for (TileType type: tileCounts.keySet()) {
+            limit+= tileCounts.get(type);
+            if (typeNumber <= limit) {
+                if (tileCounts.get(type) < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
+                tileCounts.put(type , tileCounts.get(type) - 1);
+                return type;
+            }
         }
-        limit+= clay;
-        if (typeNumber <= limit) {
-            if (clay < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
-            clay--;
-            return TileType.clay;
-        }
-        limit+= wool;
-        if (typeNumber <= limit) {
-            if (wool < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
-            wool--;
-            return TileType.wool;
-        }
-        limit+= wheat;
-        if (typeNumber <= limit) {
-            if (wheat < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
-            wheat--;
-            return TileType.wheat;
-        }
-        limit+= stone;
-        if (typeNumber <= limit) {
-            if (stone < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
-            stone--;
-            return TileType.stone;
-        }
-        if (desert < 1) throw new java.lang.Error("BUG: took type that doesnt exist");
-        desert--;
-        return TileType.desert;
+        throw new java.lang.Error("BUG: no tiles left idiot dev");
     }
 
-    private int drawRandomNumber(int[] avaliableNumbers) {
+    private int drawRandomNumber(int[] avaliableNumbers) {//TODO
         int total = 0;
         for (int i = 0; i < avaliableNumbers.length; i++) {
             total += avaliableNumbers[i];
@@ -440,43 +439,21 @@ public class Board implements Serializable {
     }
 
     private TileType drawPortType() {
-        int totalPortTypes = woodPorts + clayPorts + woolPorts + wheatPorts + stonePorts + generalPorts;
+        int totalPortTypes = portCounts.values().stream().filter(Objects::nonNull).mapToInt(Integer::intValue).sum();
         if (totalPortTypes == 0) throw new java.lang.Error("BUG: drew too many port types");
         // 0 - totalPortTypes;
         int typeNumber = random.nextInt(totalPortTypes) + 1;
-        int limit = woodPorts;
-        if (typeNumber <= limit) {
-            if (woodPorts < 1) throw new java.lang.Error("BUG: took port type that doesnt exist");
-            woodPorts--;
-            return TileType.wood;
+        int limit = 0;
+        for (TileType type: portCounts.keySet()) {
+            limit+= portCounts.get(type);
+            if (typeNumber <= limit) {
+                if (portCounts.get(type) < 1) throw new java.lang.Error("BUG: took port type that doesnt exist");
+                portCounts.put(type, portCounts.get(type) - 1);
+                if (type == TileType.desert) return null;
+                return type;
+            }
         }
-        limit+= clayPorts;
-        if (typeNumber <= limit) {
-            if (clayPorts < 1) throw new java.lang.Error("BUG: took port type that doesnt exist");
-            clayPorts--;
-            return TileType.clay;
-        }
-        limit+= woolPorts;
-        if (typeNumber <= limit) {
-            if (woolPorts < 1) throw new java.lang.Error("BUG: took port type that doesnt exist");
-            woolPorts--;
-            return TileType.wool;
-        }
-        limit+= wheatPorts;
-        if (typeNumber <= limit) {
-            if (wheatPorts < 1) throw new java.lang.Error("BUG: took port type that doesnt exist");
-            wheatPorts--;
-            return TileType.wheat;
-        }
-        limit+= stonePorts;
-        if (typeNumber <= limit) {
-            if (stonePorts < 1) throw new java.lang.Error("BUG: took port type that doesnt exist");
-            stonePorts--;
-            return TileType.stone;
-        }
-        if (generalPorts < 1) throw new java.lang.Error("BUG: took port type that doesnt exist");
-        generalPorts--;
-        return null;
+        throw new java.lang.Error("BUG: no ports left idiot dev");
     }
 
     public Tile[][] getTiles() {

@@ -59,7 +59,7 @@ public class GameManagerService {
             if (gi.getPlayers().size() == 0) {
                 gi.setOwnerId(userId);
             }
-            Player p = new Player(userId, requestedName, gi.getBank(), gi);
+            Player p = new Player(userId, requestedName, gi);
             gi.getPlayers().put(userId, p);
             playerToGame.put(userId, gameId);
             playerToName.put(userId, requestedName);

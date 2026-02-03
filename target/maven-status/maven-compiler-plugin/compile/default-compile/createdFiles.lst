@@ -21,12 +21,14 @@ com\example\hexgame\controller\GameController.class
 com\example\hexgame\model\TileType.class
 com\example\hexgame\model\DevelopmentType.class
 com\example\hexgame\dto\GameInfoDTO.class
+com\example\hexgame\model\BoardConfig.class
 com\example\hexgame\config\WebConfig.class
 com\example\hexgame\model\Node.class
 com\example\hexgame\model\Player$1.class
 com\example\hexgame\dto\PlayerDTO.class
 com\example\hexgame\model\Robber.class
 com\example\hexgame\model\RoadItem.class
+com\example\hexgame\model\BoardConfigs.class
 com\example\hexgame\model\Bank.class
 com\example\hexgame\model\Board.class
 com\example\hexgame\model\Path.class

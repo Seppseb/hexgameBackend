@@ -1,3 +1,4 @@
+C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\BoardConfigs.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\config\WebSocketConfig.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\VillageItem.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Node.java
@@ -20,6 +21,7 @@ C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\Tile.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\dto\GameConfigDTO.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\GameState.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\TradeOffer.java
+C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\BoardConfig.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\GameInstance.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\model\DevelopmentType.java
 C:\dev\hexgameBackend\src\main\java\com\example\hexgame\tasks\CleanupTask.java

@@ -33,9 +33,6 @@ public class Player {
     private ArrayDeque<VillageItem> villages;
     private ArrayDeque<CityItem> cities;
 
-    //TODO make variable, also other stuff like road amount and other things
-    private int pointsToWin = 10;
-
     public void setNextPlayer(Player nextPlayer) {
         this.nextPlayer = nextPlayer;
     }
@@ -46,10 +43,10 @@ public class Player {
     }
 
 
-    public Player(String userId, String name, Bank bank, GameInstance gameInstance) {
+    public Player(String userId, String name, GameInstance gameInstance) {
         this.userId = userId;
         this.name = name;
-        this.bank = bank;
+        this.bank = gameInstance.getBank();
         this.game = gameInstance;
         this.victoryPoints = 0;
         this.resDebt = 0;
@@ -57,15 +54,15 @@ public class Player {
         this.playedKnights = 0;
 
         this.roads = new ArrayDeque<RoadItem>();
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < this.game.getGameConfigDTO().getRoadNumber(); i++) {
             this.roads.add(new RoadItem());
         }
         this.villages = new ArrayDeque<VillageItem>();
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < this.game.getGameConfigDTO().getVillageNumber(); i++) {
             this.villages.add(new VillageItem());
         }
         this.cities = new ArrayDeque<CityItem>();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < this.game.getGameConfigDTO().getCityNumber(); i++) {
             this.cities.add(new CityItem());
         }
 
@@ -346,7 +343,7 @@ public class Player {
 
     public void addVictoryPoints(int points) {
         victoryPoints += points;
-        if (victoryPoints >= pointsToWin) {
+        if (victoryPoints >= this.game.getGameConfigDTO().getNeededVictoryPoints()) {
             game.sendWin(this);
         }
     }

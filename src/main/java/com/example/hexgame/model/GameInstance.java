@@ -53,18 +53,26 @@ public class GameInstance {
 
     private Random random;
 
-    private GameState state = GameState.WAITING_FOR_PLAYERS; //TODO -> add "minor" gamestate to handle: "Dicethrow", "moveRobber", "payDebts", "buildRoad", "selectVictim", ...
+    private GameState state = GameState.WAITING_FOR_PLAYERS; //add "minor" gamestate to handle? example: "Dicethrow", "moveRobber", "payDebts", "buildRoad", "selectVictim", ...
     private Instant lastActive = Instant.now();
 
     // Lock for per-game concurrency
     private final transient ReentrantLock lock = new ReentrantLock();
 
+    private GameConfigDTO gameConfig;
+
     public GameInstance(String id, SimpMessagingTemplate messagingTemplate, GameConfigDTO config) {
         this.random = new Random();
         this.id = id;
-        int numberOrder = config != null ? config.getNumberOrder() : 0;
-        boolean showBank = config != null ? config.getShowBank() : false;
-        this.board = new Board(this.random, numberOrder);
+        if (config == null) config = new GameConfigDTO();
+        config.makeValid();
+        
+        int numberOrder = config.getNumberOrder();
+        boolean showBank = config.getShowBank();
+        int boardSize = config.getBoardSize();
+        this.gameConfig = config;
+
+        this.board = new Board(this.random, numberOrder, boardSize);
         this.bank = new Bank(this.random, showBank);
         this.messagingTemplate = messagingTemplate;
         this.mostKnightsCard = new MostKnightsCard();
@@ -945,6 +953,10 @@ public class GameInstance {
         dto.winner = winner == null ? null : new PlayerInfoDTO(this.winner);
     
         return dto;
+    }
+
+    public GameConfigDTO getGameConfigDTO() {
+        return this.gameConfig;
     }
 
     public void touch() { this.lastActive = Instant.now(); }
