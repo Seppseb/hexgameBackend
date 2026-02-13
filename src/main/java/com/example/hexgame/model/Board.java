@@ -357,7 +357,8 @@ public class Board implements Serializable {
         for (int i = 0; i < pathsPerRow[0]; i++) {
             Path path = paths[0][i];
             if (hasPort[coastIndex]) {
-                path.setPort(new Port(drawPortType()));
+                boolean waterLeftSide = i % 2 == 0;
+                path.setPort(new Port(drawPortType(), waterLeftSide));
             }
             coastIndex++;
         }
@@ -365,7 +366,8 @@ public class Board implements Serializable {
         for (int i = 1; i < pathsPerRow.length - 1; i++) {
             Path path = paths[i][paths[i].length-1];
             if (hasPort[coastIndex]) {
-                path.setPort(new Port(drawPortType()));
+                boolean waterLeftSide = false;
+                path.setPort(new Port(drawPortType(), waterLeftSide));
             }
             coastIndex++;
         }
@@ -373,7 +375,8 @@ public class Board implements Serializable {
         for (int i = pathsPerRow[pathsPerRow.length-1] - 1; i >= 0; i--) {
             Path path = paths[pathsPerRow.length-1][i];
             if (hasPort[coastIndex]) {
-                path.setPort(new Port(drawPortType()));
+                boolean waterLeftSide = i % 2 == 0;
+                path.setPort(new Port(drawPortType(), waterLeftSide));
             }
             coastIndex++;
         }
@@ -381,7 +384,8 @@ public class Board implements Serializable {
         for (int i = pathsPerRow.length - 2; i >= 1; i--) {
             Path path = paths[i][0];
             if (hasPort[coastIndex]) {
-                path.setPort(new Port(drawPortType()));
+                boolean waterLeftSide = true;
+                path.setPort(new Port(drawPortType(), waterLeftSide));
             }
             coastIndex++;
         }
