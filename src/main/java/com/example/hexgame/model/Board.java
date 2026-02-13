@@ -92,7 +92,6 @@ public class Board implements Serializable {
                 for (int i = 0; i < 200; i++) {
                     List<Integer> currentNumbers = generateRandomNumbers();
                     double currentScore = this.getNumberUnFairnessScore();
-                    System.out.println(currentScore);
                     if (currentScore < bestScore) {
                         fairestNumbers = currentNumbers;
                         bestScore = currentScore;
