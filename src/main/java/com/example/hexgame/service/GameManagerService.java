@@ -26,10 +26,18 @@ public class GameManagerService {
         this.messagingTemplate = messagingTemplate;
     }
 
+    public void sendGameListUpdate() {
+        messagingTemplate.convertAndSend(
+            "/topic/gameList",
+            Map.of("type", "update")
+        );
+    }
+
     public GameInstance createGame(GameConfigDTO config) {
         String id = UUID.randomUUID().toString();
         GameInstance g = new GameInstance(id, messagingTemplate, config);
         games.put(id, g);
+        this.sendGameListUpdate();
         return g;
     }
 
@@ -64,6 +72,7 @@ public class GameManagerService {
             playerToGame.put(userId, gameId);
             playerToName.put(userId, requestedName);
             gi.sendMessage("JOINED_GAME", requestedName, "", requestedName);
+            this.sendGameListUpdate();
             return JoinResult.success(userId, gameId, requestedName);
         } finally {
             gi.getLock().unlock();
@@ -80,6 +89,7 @@ public class GameManagerService {
             if (gi.getPlayers().size() < 2) return false;
             gi.startGame();
             gi.sendMessage("STARTED_GAME", "", "", "");
+            this.sendGameListUpdate();
             return true;
         } finally {
             gi.getLock().unlock();
