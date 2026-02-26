@@ -1,6 +1,8 @@
 package com.example.hexgame.model;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -11,13 +13,13 @@ public class Path {
 
     private Port port;
 
-    private HashSet<String> canPlaceRoad;
+    private HashMap<String, HashSet<Node>> reachableForPlayerViaNode;
     private HashSet<String> canPlaceInitialRoad;
 
     public Path() {
         nodes = new Node[2];
         color = "beige";
-        canPlaceRoad = new HashSet<String>();
+        reachableForPlayerViaNode = new HashMap<String, HashSet<Node>>();
         canPlaceInitialRoad = new HashSet<String>();
     }
 
@@ -36,7 +38,7 @@ public class Path {
 
     public boolean canBuildRoad(Player player) {
         if (owner != null || !"beige".equals(color) || player == null) return false;
-        if (!canPlaceRoad.contains(player.getUserId())) return false;
+        if (!reachableForPlayerViaNode.containsKey(player.getUserId())) return false;
         return true;
     }
 
@@ -50,11 +52,10 @@ public class Path {
         if (!canBuildRoad(owner)) return;
         this.owner = owner;
         this.color = owner.getColor();
-        this.canPlaceRoad.clear();
         this.canPlaceInitialRoad.clear();
         for (Node node: nodes) {
             if (node == null) return;
-            node.builtAdjacentRoad(owner);
+            node.builtAdjacentRoad(owner, this);
         }
     }
 
@@ -62,12 +63,11 @@ public class Path {
         if (!canBuildInitialRoad(owner)) return;
         this.owner = owner;
         this.color = owner.getColor();
-        this.canPlaceRoad.clear();
         this.canPlaceInitialRoad.clear();
         for (Node node: nodes) {
             if (node == null) return;
             node.removeOtherInitialRoadPlaceSpots(owner);
-            node.builtAdjacentRoad(owner);
+            node.builtAdjacentRoad(owner, this);
         }
     }
 
@@ -75,8 +75,11 @@ public class Path {
         return color;
     }
 
-    public void addRoadPlacer(String playerId) {
-        this.canPlaceRoad.add(playerId);
+    public void addReachable(String playerId, Node node) {
+        if (!reachableForPlayerViaNode.containsKey(playerId)) {
+            reachableForPlayerViaNode.put(playerId, new HashSet<Node>());
+        }
+        reachableForPlayerViaNode.get(playerId).add(node);
     }
     
     public void addInitialRoadPlacer(String playerId) {
@@ -88,12 +91,31 @@ public class Path {
         this.canPlaceInitialRoad.remove(playerId);
     }
 
-    public HashSet<String> getCanPlaceRoad() {
-        return canPlaceRoad;
+    public Set<String> getCanPlaceRoad() {
+        return reachableForPlayerViaNode.keySet();
+    }
+
+    public HashMap<String, HashSet<Node>> getReachableForPlayerViaNode() {
+        return reachableForPlayerViaNode;
     }
 
     public HashSet<String> getCanPlaceInitialRoad() {
         return canPlaceInitialRoad;
+    }
+
+    public void claimNode(Player owner, Node node) {
+        HashSet<String> deleted = new HashSet<String>();
+        for (String playerId: reachableForPlayerViaNode.keySet()) {
+            if (owner.getUserId().equals(playerId)) continue;
+            reachableForPlayerViaNode.get(playerId).remove(node);
+            if (reachableForPlayerViaNode.get(playerId).size() <= 0) {
+                deleted.add(playerId);
+                //TODO? recursivly remove otherreachable nodes and paths reachble via this node
+            }
+        }
+        for (String playerId: deleted) {
+            reachableForPlayerViaNode.remove(playerId);
+        }
     }
 
 

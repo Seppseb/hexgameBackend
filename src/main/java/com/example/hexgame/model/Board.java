@@ -531,6 +531,8 @@ public class Board implements Serializable {
                 if (next == null) continue;
                 if (next.getOwner() != path.getOwner()) continue;
                 if (used.contains(next)) continue;
+                if (!next.getReachableForPlayerViaNode().containsKey(path.getOwner().getUserId())) continue;
+                if (!next.getReachableForPlayerViaNode().get(path.getOwner().getUserId()).contains(node)) continue;
                 used.add(next);
                 int newLength = checkRoadLength(next, used, node);
                 max = newLength > max ? newLength : max;

@@ -58,6 +58,9 @@ public class Node {
         for (Node neighbour : neighbours) {
             if (neighbour != null) neighbour.markUnuseable();
         }
+        for (Path path: paths) {
+            if (path != null) path.claimNode(player, this);
+        }
         return true;
     }
 
@@ -72,6 +75,9 @@ public class Node {
         for (Node neighbour : neighbours) {
             if (neighbour != null) neighbour.markUnuseable();
         }
+        for (Path path: paths) {
+            if (path != null) path.claimNode(player, this);
+        }
 
         letPlayerBuildInitialRoad(player);
         
@@ -85,13 +91,11 @@ public class Node {
         return true;
     }
 
-    public void builtAdjacentRoad(Player player) {
-        //TODO only if node is not owned by other player -> what if first road, then other player owns node? not clear, since road usre could have 2 access points
-        //FIX: add counter to count number of ways this road can be reached, -- if other player owns node, ++ if this player build adjacent road? -> count way to be reached by node not by road...
+    public void builtAdjacentRoad(Player player, Path origin) {
         for (Path path: paths) {
             if (path == null) continue;
-            if (path.getOwner() != null) continue;
-            path.addRoadPlacer(player.getUserId());
+            if (path == origin) continue;
+            path.addReachable(player.getUserId(), this);
         }
         if (owner != null || !"beige".equals(color) || player == null) return;
         for (Node neighbour : neighbours) {
