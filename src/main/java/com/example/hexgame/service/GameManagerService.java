@@ -41,8 +41,8 @@ public class GameManagerService {
         return g;
     }
 
-    public Optional<GameInstance> getGame(String gameId) {
-        return Optional.ofNullable(games.get(gameId));
+    public GameInstance getGame(String gameId) {
+        return games.get(gameId);
     }
 
     public List<GameInstance> listGames() {

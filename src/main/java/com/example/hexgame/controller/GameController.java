@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.example.hexgame.dto.GameConfigDTO;
 
@@ -43,9 +42,9 @@ public class GameController {
 
         boolean joined = false;
         if (userId != null) {
-            Optional<GameInstance> oldgi = manager.getGame(gameId);
-            if (oldgi.isPresent() && oldgi.get().getPlayers().get(userId) != null) {
-                oldgi.get().getPlayers().get(userId).setName(name);
+            GameInstance oldgi = manager.getGame(gameId);
+            if (oldgi != null && oldgi.getPlayers().get(userId) != null) {
+                oldgi.getPlayers().get(userId).setName(name);
                 manager.sendUpdate(gameId);
                 joined = true;
             } else {
@@ -89,9 +88,9 @@ public class GameController {
 
     @GetMapping("/info/{gameId}")
     public ResponseEntity<?> getGameInfo(@PathVariable String gameId) {
-        return manager.getGame(gameId)
-                .map(game -> ResponseEntity.ok(game.toInfoDTO()))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        GameInstance game = manager.getGame(gameId);
+        if (game == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(game.toInfoDTO());
     }
 
     @GetMapping("/{gameId}")
@@ -99,10 +98,9 @@ public class GameController {
             @PathVariable String gameId,
             @RequestHeader(value = "X-User-Id", required = false) String userId,
             HttpServletResponse response) {
-
-        return manager.getGame(gameId)
-                .map(game -> ResponseEntity.ok(game.toDTO(userId)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        GameInstance game = manager.getGame(gameId);
+        if (game == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(game.toDTO(userId));
     }
 
     @PostMapping("/{gameId}/start")
@@ -117,8 +115,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent() || !gi.get().isGameOwner(userId)) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null || !gi.isGameOwner(userId)) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "not game owner"));
@@ -151,8 +149,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -185,8 +183,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -219,8 +217,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -255,8 +253,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -291,8 +289,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -325,8 +323,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -361,8 +359,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -400,8 +398,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -439,8 +437,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -473,8 +471,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -512,8 +510,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -551,8 +549,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -586,8 +584,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -625,8 +623,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -663,8 +661,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -698,8 +696,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));
@@ -733,8 +731,8 @@ public class GameController {
                         .body(Map.of("success", false, "message", "not logged in"));
         }
 
-        Optional<GameInstance> gi = manager.getGame(gameId);
-        if (!gi.isPresent()) {
+        GameInstance gi = manager.getGame(gameId);
+        if (gi == null) {
             return ResponseEntity
                         .badRequest()
                         .body(Map.of("success", false, "message", "game not found"));

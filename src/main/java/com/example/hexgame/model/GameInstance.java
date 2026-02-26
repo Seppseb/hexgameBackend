@@ -912,7 +912,6 @@ public class GameInstance {
 
     public GameDTO toDTO(String playerId) {
         Player you = players.get(playerId);
-        if (you == null) return null;
 
         GameDTO dto = new GameDTO();
 
@@ -949,7 +948,9 @@ public class GameInstance {
         dto.singleDieStats = getSingleDieStats();
         dto.doubleDieStats = getDoubleDieStats();
 
-        dto.you = new PlayerDTO(you, this.state == GameState.PLACEMENT);
+        if (you != null) {
+            dto.you = new PlayerDTO(you, this.state == GameState.PLACEMENT);
+        }
         dto.winner = winner == null ? null : new PlayerInfoDTO(this.winner);
     
         return dto;
