@@ -72,6 +72,8 @@ public class GameInstance {
         int boardSize = config.getBoardSize();
         this.gameConfig = config;
 
+        System.out.println(config.getMaxPlayerSize());
+
         this.board = new Board(this.random, numberOrder, boardSize);
         this.bank = new Bank(this.random, showBank);
         this.messagingTemplate = messagingTemplate;

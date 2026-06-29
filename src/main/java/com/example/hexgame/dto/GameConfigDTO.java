@@ -27,6 +27,8 @@ public class GameConfigDTO {
 
     private static final int MIN_NEEDED_VPS = 3;
 
+    private static final int MIN_MAX_PLAYER_SIZE = 2;
+
 
     private int numberOrder;
     private boolean showBank;
@@ -35,6 +37,7 @@ public class GameConfigDTO {
     private int cityNumber;
     private int roadNumber;
     private int neededVictoryPoints;
+    private int maxPlayerSize;
 
     public void makeValid() {
 
@@ -65,6 +68,10 @@ public class GameConfigDTO {
         int maxVps = cityNumber * 2 + villageNumber + 2;
         if (neededVictoryPoints < MIN_NEEDED_VPS || neededVictoryPoints > maxVps) {
             neededVictoryPoints = maxVps;
+        }
+
+        if (maxPlayerSize < MIN_MAX_PLAYER_SIZE) {
+            maxPlayerSize = MIN_MAX_PLAYER_SIZE;
         }
     }
     
@@ -124,5 +131,8 @@ public class GameConfigDTO {
     public void setNeededVictoryPoints(int neededVictoryPoints) {
         this.neededVictoryPoints = neededVictoryPoints;
     }
-    
+
+    public int getMaxPlayerSize() {
+        return maxPlayerSize;
+    }
 }
