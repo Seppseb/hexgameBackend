@@ -15,4 +15,6 @@ public class GameInfoDTO {
     public PlayerInfoDTO winner;
 
     public Map<String, PlayerInfoDTO> players;
+
+    public GameConfigDTO config;
 }

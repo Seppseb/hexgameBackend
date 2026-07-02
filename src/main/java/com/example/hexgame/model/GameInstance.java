@@ -137,20 +137,28 @@ public class GameInstance {
     }
 
     public void assignColors() {
-        List<String> colors = new ArrayList<>();
-        colors.add("red");
-        colors.add("blue");
-        colors.add("green");
-        colors.add("yellow");
+        String [] colors = new String[] {
+            "red",
+            "blue",
+            "green",
+            "yellow",
+          
+            "purple",
+            "orange",
+            "pink",
+            "cyan",
+            "lime",
+            "slate",
+        };
+        int i = 0;
         for (Player player : players.values()) {
-            player.addRes(TileType.wood, 10);
-            player.addRes(TileType.clay, 10);
-            player.addRes(TileType.wheat, 10);
-            player.addRes(TileType.wool, 10);
-            player.addRes(TileType.stone, 10);
-            int i = random.nextInt(colors.size());
-            player.setColor(colors.get(i));
-            colors.remove(i);
+            //player.addRes(TileType.wood, 10);
+            //player.addRes(TileType.clay, 10);
+            //player.addRes(TileType.wheat, 10);
+            //player.addRes(TileType.wool, 10);
+            //player.addRes(TileType.stone, 10);
+            player.setColor(colors[i]);
+            i++;
         }
     }
 
@@ -900,6 +908,7 @@ public class GameInstance {
         dto.state = getState();
         dto.lastActive = getLastActive();
         dto.ownerId = getOwnerId();
+
     
         dto.players = players.values().stream()
         .collect(Collectors.toMap(
@@ -909,6 +918,8 @@ public class GameInstance {
 
         dto.winner = winner == null ? null : new PlayerInfoDTO(this.winner);
     
+        dto.config = this.gameConfig;
+
         return dto;
     }
 

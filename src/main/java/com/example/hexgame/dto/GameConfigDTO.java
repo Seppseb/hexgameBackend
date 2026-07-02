@@ -28,6 +28,7 @@ public class GameConfigDTO {
     private static final int MIN_NEEDED_VPS = 3;
 
     private static final int MIN_MAX_PLAYER_SIZE = 2;
+    private static final int MAX_MAX_PLAYER_SIZE = 10;
 
 
     private int numberOrder;
@@ -72,6 +73,9 @@ public class GameConfigDTO {
 
         if (maxPlayerSize < MIN_MAX_PLAYER_SIZE) {
             maxPlayerSize = MIN_MAX_PLAYER_SIZE;
+        }
+        if (maxPlayerSize > MAX_MAX_PLAYER_SIZE) {
+            maxPlayerSize = MAX_MAX_PLAYER_SIZE;
         }
     }
     

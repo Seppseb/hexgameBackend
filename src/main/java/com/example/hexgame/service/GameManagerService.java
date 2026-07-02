@@ -60,7 +60,7 @@ public class GameManagerService {
             if (gi.getState() != GameState.WAITING_FOR_PLAYERS) {
                 return JoinResult.error("Game already started");
             }
-            if (gi.getPlayers().size() >= 4) {
+            if (gi.getPlayers().size() >= gi.getGameConfigDTO().getMaxPlayerSize()) {
                 return JoinResult.error("Game is full");
             }
             String userId = UUID.randomUUID().toString();
